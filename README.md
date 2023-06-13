@@ -1,6 +1,9 @@
 # Event-Driven Architecture Demo with Ruby on Rails
 
-This project illustrates how to build an event-driven architecture in Ruby on Rails, following many Doman Driven Design best practices.
+This project illustrates how to build an event-driven architecture in Ruby on Rails, following many Doman Driven Design best practices including
+
+1. **layered architecture**: HTTP, GraphQL, ruby console -> calls stateless application service -> orchestrates models
+2. **modularised monolith**: models exist in a subdomain, which provides a bounded context for abstraction
 
 ## Benefits of Event-Driven Architecture (EDA)
 
@@ -16,7 +19,7 @@ This project illustrates how to build an event-driven architecture in Ruby on Ra
 
 ## Conceptual Model Example
 
-![Screenshot from 2023-06-14 02-50-06](https://github.com/fast-programmer/message_driven_app/assets/394074/1c3f3612-9159-4032-bf57-8eee6ff87243)
+![Screenshot from 2023-06-14 08-56-18](https://github.com/fast-programmer/message_driven_app/assets/394074/1598fd47-c9ac-4caa-bf0b-df69310bc166)
 
 ## Getting Started
 
