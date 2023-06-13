@@ -1,4 +1,3 @@
-user = User.create!(email: 'tester@fastprogrammer.co')
-user_created_event = user.events.create!(name: 'User.created')
-
-debugger
+user = Models.User.create!(email: 'tester@fastprogrammer.co')
+account = Models.Account.create!(name: 'Account 1', slug: 'account-1');
+user.events.create!(name: 'User.created', body: { 'descripton' => 'testing' })

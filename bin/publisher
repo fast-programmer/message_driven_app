@@ -12,18 +12,19 @@ Signal.trap('INT') { exit }
 loop do
   message = nil
 
-  Message.transaction do
-    message = Message.where(status: Message::STATUS[:unpublished]).order(:created_at).lock(true).first
-    message&.update!(status: Message::STATUS[:publishing])
+  ActiveRecord::Base.transaction do
+    debugger;
+    message = Models::Message.where(status: Models::Message::STATUS[:unpublished]).order(:created_at).lock(true).first
+    message&.update!(status: Models::Message::STATUS[:publishing])
   end
 
   if message
     begin
       handle(message: message)
 
-      message.update!(status: Message::STATUS[:published])
+      message.update!(status: Models::Message::STATUS[:published])
     rescue StandardError => e
-      message.update!(status: Message::STATUS[:failed])
+      message.update!(status: Models::Message::STATUS[:failed])
 
       puts "An error occurred while handling message #{message.id}: #{e.message}"
 

@@ -1,2 +1,4 @@
-class Event < Message
+module Models
+  class Event < Message
+  end
 end

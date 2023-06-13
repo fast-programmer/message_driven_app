@@ -9,7 +9,7 @@ RSpec.describe 'Publisher Script', type: :integration do
     puts 'forked'
 
     sleep 5
-    puts 'slept 5 second'
+    puts 'slept 5 seconds'
 
     Process.kill('SIGTERM', pid)
     puts 'killed'

@@ -17,4 +17,4 @@ class CreateMessages < ActiveRecord::Migration[6.0]
   end
 end
 
-# TODO: add account_id, user_id, messageable_type, messageable_id
+# TODO: add user_id

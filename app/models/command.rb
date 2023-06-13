@@ -1,2 +1,4 @@
-class Command < Message
+module Models
+  class Command < Message
+  end
 end
