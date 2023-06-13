@@ -62,7 +62,7 @@ SELECT * FROM messages ORDER BY created_at ASC;
 
 ```
 irb(main):005:0> IAM::Models::User.find(1).events.map { |event| event.name }
-=> ["User.created"]
+=> ["IAM::User.created"]
 ```
 
 ### How to publish an unpublished model event (out of band)
