@@ -14,6 +14,9 @@ This project illustrates how to build an event-driven architecture in Ruby on Ra
 
 5. **Resiliency**: By separating the event producers from the consumers, the system becomes more resilient. If one part of the system fails, it won't directly affect the others.
 
+## Conceptual Model Example
+
+![Screenshot from 2023-06-14 02-50-06](https://github.com/fast-programmer/message_driven_app/assets/394074/1c3f3612-9159-4032-bf57-8eee6ff87243)
 
 ## Getting Started
 
@@ -42,6 +45,17 @@ RAILS_ENV=development bin/rails s
 
 ```bash
 curl -X POST -H "Content-Type: application/json" -d '{"user": {"email": "test@example.com"}}' http://localhost:3000/api/users
+```
+
+```
+SELECT * FROM messages ORDER BY created_at ASC;
+```
+
+![Screenshot from 2023-06-14 02-45-38](https://github.com/fast-programmer/message_driven_app/assets/394074/fe34c94f-2de8-4264-8a3d-0753c8b6499d)
+
+```
+irb(main):005:0> Models::User.find(1).events.map { |event| event.name }
+=> ["User.created"]
 ```
 
 Note `Api::UserController#create` calls the application service `User.create(...)`, which is implemented like this:
