@@ -82,6 +82,10 @@ Main point is that heavy lifting is done outside of web requests, based on event
 
 ## Future Improvements
 
+### Support concurrency in publisher
+
+Use a pool of worker threads to handle more than 1 event concurrently.
+
 ### Automated Code Generation via Gem
 
 Automate the creation of the schema, model, test, and publisher code through a generator. This generator could be included in a separate gem and required into the main app.
