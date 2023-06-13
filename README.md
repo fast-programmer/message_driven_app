@@ -47,7 +47,7 @@ RAILS_ENV=development bin/rails c
 
 ```
 ActiveRecord::Base.transaction do
-  user = Models::User.create(email: 'test@example.com')
+  user = IAM::Models::User.create(email: 'test@example.com')
   user.events.create!(name: 'User.create')
 end
 ```
@@ -59,7 +59,7 @@ SELECT * FROM messages ORDER BY created_at ASC;
 ![Screenshot from 2023-06-14 09-23-09](https://github.com/fast-programmer/message_driven_app/assets/394074/bfb63ab4-f758-4de7-8f56-5974b8d4ea8e)
 
 ```
-irb(main):005:0> Models::User.find(1).events.map { |event| event.name }
+irb(main):005:0> IAM::Models::User.find(1).events.map { |event| event.name }
 => ["User.created"]
 ```
 
