@@ -1,4 +1,4 @@
-require_relative 'event_handler/iam/user/created'
+require_relative 'message_handler/iam/user'
 
 module ActiveCampaignIntegration
   module MessageHandler

@@ -3,6 +3,9 @@
 ENV['RAILS_ENV'] ||= 'development'
 require_relative '../config/environment'
 
+require_relative '../subdomains/active_campaign_integration/message_handler'
+require_relative '../subdomains/mailchimp_integration/message_handler'
+
 def handle(message:)
   puts "Publishing message #{message.id}: #{message.name}"
 
