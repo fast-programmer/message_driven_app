@@ -1,5 +1,7 @@
 module Api
   class UsersController < ::ApplicationController
+    protect_from_forgery with: :null_session
+
     def create
       user = User.create(email: user_params[:email])
 
