@@ -1,10 +1,10 @@
 class Message < ApplicationRecord
   STATUS = {
-    unpublished: 0,
-    publishing: 1,
-    published: 2,
-    failed: 3
+    unpublished: 'unpublished',
+    publishing: 'publishing',
+    published: 'published',
+    failed: 'failed'
   }.freeze
 
-  enum status: STATUS
+  attribute :status, :text, default: STATUS[:unpublished]
 end

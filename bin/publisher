@@ -13,21 +13,27 @@ loop do
   message = nil
 
   Message.transaction do
-    message = Message.where(status: Message.statuses[:unpublished]).order(:created_at).lock(true).first
-    message&.update!(status: Message.statuses[:publishing])
+    message = Message.where(status: Message::STATUS[:unpublished]).order(:created_at).lock(true).first
+    message&.update!(status: Message::STATUS[:publishing])
   end
 
   if message
     begin
       handle(message: message)
 
-      message.update!(status: Message.statuses[:published])
+      message.update!(status: Message::STATUS[:published])
     rescue StandardError => e
-      message.update!(status: Message.statuses[:failed])
+      message.update!(status: Message::STATUS[:failed])
 
       puts "An error occurred while handling message #{message.id}: #{e.message}"
+
+      raise
     end
   else
+    puts 'No events found, sleeping...'
+
     sleep 1
   end
 end
+
+# usage: bin/publisher poll=1

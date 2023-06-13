@@ -17,10 +17,11 @@ ActiveRecord::Schema.define(version: 2023_06_13_050356) do
 
   create_table "messages", force: :cascade do |t|
     t.text "name", null: false
-    t.integer "status", null: false
+    t.text "status", null: false
     t.jsonb "body"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["status", "created_at"], name: "index_messages_on_status_and_created_at"
   end
 
   create_table "users", force: :cascade do |t|

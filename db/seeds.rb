@@ -5,3 +5,7 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
+
+tester_user = User.create!(email: 'tester@fastprogrammer.co')
+# user_created_message = tester_user.messages.create!(name: 'User.created')
+Message.create!(name: 'User.created')
