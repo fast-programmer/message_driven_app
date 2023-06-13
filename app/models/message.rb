@@ -1,3 +1,10 @@
 class Message < ApplicationRecord
-  enum status: { unprocessed: 0, processing: 1, processed: 2, failed: 3 }
+  STATUS = {
+    unpublished: 0,
+    publishing: 1,
+    published: 2,
+    failed: 3
+  }.freeze
+
+  enum status: STATUS
 end

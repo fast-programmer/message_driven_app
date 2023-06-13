@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+ENV['RAILS_ENV'] ||= 'development'
+require_relative '../config/environment'
+
+def handle(message:)
+  puts "Handling message: #{message.name}"
+end
+
+Signal.trap('INT') { exit }
+
+loop do
+  message = nil
+
+  Message.transaction do
+    message = Message.where(status: Message.statuses[:unpublished]).order(:created_at).lock(true).first
+    message&.update!(status: Message.statuses[:publishing])
+  end
+
+  if message
+    begin
+      handle(message: message)
+
+      message.update!(status: Message.statuses[:published])
+    rescue StandardError => e
+      message.update!(status: Message.statuses[:failed])
+
+      puts "An error occurred while handling message #{message.id}: #{e.message}"
+    end
+  else
+    sleep 1
+  end
+end
