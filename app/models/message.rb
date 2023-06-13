@@ -1,4 +1,6 @@
 class Message < ApplicationRecord
+  belongs_to :messageable, polymorphic: true
+
   STATUS = {
     unpublished: 'unpublished',
     publishing: 'publishing',

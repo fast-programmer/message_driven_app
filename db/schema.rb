@@ -16,12 +16,18 @@ ActiveRecord::Schema.define(version: 2023_06_13_050356) do
   enable_extension "plpgsql"
 
   create_table "messages", force: :cascade do |t|
+    t.text "type", null: false
+    t.text "messageable_type", null: false
+    t.bigint "messageable_id", null: false
     t.text "name", null: false
     t.text "status", null: false
     t.jsonb "body"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["messageable_type", "messageable_id"], name: "index_messages_on_messageable_type_and_messageable_id"
     t.index ["status", "created_at"], name: "index_messages_on_status_and_created_at"
+    t.index ["status"], name: "index_messages_on_status"
+    t.index ["type"], name: "index_messages_on_type"
   end
 
   create_table "users", force: :cascade do |t|
