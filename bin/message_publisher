@@ -13,7 +13,6 @@ loop do
   message = nil
 
   ActiveRecord::Base.transaction do
-    debugger;
     message = Models::Message.where(status: Models::Message::STATUS[:unpublished]).order(:created_at).lock(true).first
     message&.update!(status: Models::Message::STATUS[:publishing])
   end

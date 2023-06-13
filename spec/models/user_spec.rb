@@ -14,11 +14,14 @@ module Models
 
     it 'creates and retrieves a user with the correct attributes' do
       created_user = User.create(email: user[:email])
-      created_event = created_user.events.create!(name: event[:name], body: event[:body])
+      created_event = created_user.events.create!(
+        user_id: created_user.id, name: event[:name], body: event[:body]
+      )
 
       found_user = User.find(created_user.id)
       found_event = found_user.events.find(created_event.id)
 
+      expect(found_event.user_id).to eq(created_event.user_id)
       expect(found_user.email).to eq(user[:email])
       expect(found_event.name).to eq(event[:name])
       expect(found_event.body).to eq(event[:body])

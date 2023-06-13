@@ -19,6 +19,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_050356) do
     t.text "type", null: false
     t.text "messageable_type", null: false
     t.bigint "messageable_id", null: false
+    t.bigint "user_id", null: false
     t.text "name", null: false
     t.text "status", null: false
     t.jsonb "body"
@@ -31,9 +32,11 @@ ActiveRecord::Schema.define(version: 2023_06_13_050356) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "email", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.text "email", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  add_foreign_key "messages", "users"
 end
