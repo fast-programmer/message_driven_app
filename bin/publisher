@@ -4,7 +4,7 @@ ENV['RAILS_ENV'] ||= 'development'
 require_relative '../config/environment'
 
 def handle(message:)
-  puts "Handling message: #{message.name}"
+  puts "Handling message #{message.id}: #{message.name}"
 end
 
 Signal.trap('INT') { exit }
