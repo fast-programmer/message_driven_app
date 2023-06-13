@@ -13,17 +13,17 @@ loop do
   message = nil
 
   ActiveRecord::Base.transaction do
-    message = Models::Message.where(status: Models::Message::STATUS[:unpublished]).order(:created_at).lock(true).first
-    message&.update!(status: Models::Message::STATUS[:publishing])
+    message = Models::Message.where(status: Message::STATUS[:unpublished]).order(:created_at).lock(true).first
+    message&.update!(status: Message::STATUS[:publishing])
   end
 
   if message
     begin
       handle(message: message)
 
-      message.update!(status: Models::Message::STATUS[:published])
+      message.update!(status: Message::STATUS[:published])
     rescue StandardError => e
-      message.update!(status: Models::Message::STATUS[:failed])
+      message.update!(status: Message::STATUS[:failed])
 
       puts "An error occurred while handling message #{message.id}: #{e.message}"
 
@@ -35,5 +35,3 @@ loop do
     sleep 1
   end
 end
-
-# usage: bin/publisher poll=1

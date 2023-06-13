@@ -1,13 +1,11 @@
 module Api
   class UsersController < ::ApplicationController
     def create
-      @user = User.new(user_params)
+      user = User.create(email: user_params[:email])
 
-      if @user.save
-        render json: @user, status: :created
-      else
-        render json: @user.errors, status: :unprocessable_entity
-      end
+      render json: user, status: :created
+    rescue User::Error => e
+      render json: { errors: e.message }, status: :unprocessable_entity
     end
 
     private

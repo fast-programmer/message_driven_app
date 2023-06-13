@@ -16,6 +16,7 @@ require_relative '../app/models/event'
 require_relative '../app/models/command'
 
 require_relative '../app/services/user'
+require_relative '../app/services/message'
 
 module MessageDrivenApp
   class Application < Rails::Application
