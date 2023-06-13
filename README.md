@@ -88,7 +88,7 @@ Create schema, model, test and publisher code via a generator, which can be incl
 
 ### Multitenant Support
 
-This application supports multitenancy, allowing for separate, isolated user spaces.
+Allowing for separate, isolated user spaces.
 
 ## Contributing
 
