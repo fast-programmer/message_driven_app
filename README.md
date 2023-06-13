@@ -46,10 +46,12 @@ RAILS_ENV=development bin/rails c
 ```
 
 ```
-ActiveRecord::Base.transaction do
-  user = IAM::Models::User.create(email: 'test@example.com')
-  user.events.create!(name: 'User.create')
-end
+IAM::User.create(email: 'test@example.com')
+
+# ActiveRecord::Base.transaction do
+#   user = IAM::Models::User.create(email: 'test@example.com')
+#   user.events.create!(name: 'User.create')
+# end
 ```
 
 ```
