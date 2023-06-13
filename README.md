@@ -80,7 +80,9 @@ This script enumerates through all unpublished events, calling message handlers 
 
 ### How to react to a model event being published (out of band)
 
-The publisher would be updated to route events to stateless handler functions based on the `event.name` (e.g. `User.created`).
+The publisher broadcasts each event to all subdomain message handlers.
+
+Inside each subdomain message handler, messages are routed to handlers based on `event.name` (e.g. `User.created`).
 
 This is the best place to call external APIs.
 
