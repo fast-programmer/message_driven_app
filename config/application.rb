@@ -15,6 +15,8 @@ require_relative '../app/models/message'
 require_relative '../app/models/event'
 require_relative '../app/models/command'
 
+require_relative '../app/services/user'
+
 module MessageDrivenApp
   class Application < Rails::Application
     config.load_defaults 6.0

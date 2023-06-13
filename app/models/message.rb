@@ -6,8 +6,8 @@ module Models
     validates :user_id, presence: true
     validates :name, presence: true
     validates :status, presence: true
-    validates :body, presence: true
 
+    belongs_to :user
     belongs_to :messageable, polymorphic: true
 
     STATUS = {

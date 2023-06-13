@@ -1,10 +1,12 @@
 module User
-  extend self
+  module_function
 
-  def create(name:)
+  def create(email:, created_at: Time.now.utc)
+    user = nil
+
     ActiveRecord::Base.transaction do
-      user = User.create!(email: 'tester@fastprogrammer.co')
-      user.events.create!(type: 'User.created')
+      user = Models::User.create!(email: email, created_at: created_at)
+      user.events.create!(user_id: user.id, name: 'User.created', created_at: created_at)
     end
 
     user.readonly!
