@@ -61,7 +61,7 @@ SELECT * FROM messages ORDER BY created_at ASC;
 ![Screenshot from 2023-06-14 09-37-25](https://github.com/fast-programmer/message_driven_app/assets/394074/44128fc6-e983-4041-846e-0461984e1719)
 
 ```
-irb(main):005:0> IAM::Models::User.find(1).events.map { |event| event.name }
+irb(main):005:0> IAM::Models::User.find(2).events.map { |event| event.name }
 => ["IAM::User.created"]
 ```
 
