@@ -48,10 +48,12 @@ RAILS_ENV=development bin/rails c
 ```
 IAM::User.create(email: 'test@example.com')
 
-# ActiveRecord::Base.transaction do
-#   user = IAM::Models::User.create(email: 'test@example.com')
-#   user.events.create!(name: 'User.create')
-# end
+# OR
+
+ActiveRecord::Base.transaction do
+  user = IAM::Models::User.create(email: 'test@example.com')
+  user.events.create!(name: 'User.create')
+end
 ```
 
 ```
@@ -71,10 +73,10 @@ irb(main):005:0> IAM::Models::User.find(2).events.map { |event| event.name }
 bin/message_publisher
 ```
 
-This script enumerates through all unpublished events, calling a handler for each one and
+This script enumerates through all unpublished events, calling message handlers in each subdomain
 
-* if the handler did not throw an exception, the message status is set to `published`
-* if the handler did throw an exception, the message status is set to `failed`
+* if the handlers do not throw any exceptions, set the message status to `published`
+* if the handlers do throw an exception, set the message status to `failed`
 
 ### How to react to a model event being published (out of band)
 
