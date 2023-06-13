@@ -1,25 +1,19 @@
 # Event-Driven Architecture Demo with Ruby on Rails
 
-This project illustrates how to build an event-driven architecture in Ruby on Rails, following many Doman Driven Design principles.
+This project illustrates how to build an event-driven architecture in Ruby on Rails, following many Doman Driven Design best practices.
 
-## Benefits of Event-Driven Architecture
+## Benefits of Event-Driven Architecture (EDA)
 
-1. **Scalability**: Event-driven architectures are typically highly scalable. They can handle high volumes of events and adapt to changes in these volumes over time.
+1. **Simplicity**: A shared, event-centric conceptual model provides a unified, non-technical understanding across different system components and stakeholders, reducing complexity and facilitating clearer communication.
 
-2. **Decoupling**: EDA promotes loose coupling between system components, as each component only knows about the event and how to handle it. This allows developers to work on individual components without impacting the whole system.
+2. **Visibility**: By centralizing event logging it becomes easier to monitor, troubleshoot, and debug system issues.
 
-3. **Resiliency**: By separating the event producers from the consumers, your system becomes more resilient. If one part of the system fails, it won't directly affect the others.
+3. **Scalability**: EDA's are highly scalable. They can handle high volumes of events and adapt to changes in these volumes over time.
 
-4. **Asynchronous Communication**: EDA supports asynchronous communication between system components, allowing for non-blocking interactions.
+4. **Decoupling**: EDA promotes loose coupling between system components, as each component only knows about the event and how to handle it. This allows developers to work on individual components without impacting the whole system.
 
-5. **Better User Experience**: By responding to user interactions in real time, EDA can provide a more dynamic, responsive user experience.
+5. **Resiliency**: By separating the event producers from the consumers, the system becomes more resilient. If one part of the system fails, it won't directly affect the others.
 
-6. **Easier Troubleshooting and Debugging**: By centralizing event logging, it becomes easier to monitor, troubleshoot, and debug system issues, since you can follow the path of events through your system.
-
-
-It includes a stateless application service (`User.create`) that performs operations within a database transaction to create a `Models::User` and add an unpublished `Models::Event` associated with the user.
-
-Additionally, it includes an out-of-band message publishing script that picks up unpublished messages and pushes them out to a handler, marking it as published or failed.
 
 ## Getting Started
 
@@ -34,13 +28,23 @@ bundle install
 After installing, you can create the database and run the migration:
 
 ```bash
-rake db:create
-rake db:migrate
+RAILS_ENV=development bin/rake db:create
+RAILS_ENV=development bin/rake db:migrate
 ```
 
-### How to create an event (in band)
+And finally, start the server.
 
-Note `User.create(...)` in `services/user.rb`
+```bash
+RAILS_ENV=development bin/rails s
+```
+
+### How to create an unpublished model event (in band)
+
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"user": {"email": "test@example.com"}}' http://localhost:3000/api/users
+```
+
+Note `Api::UserController#create` calls the application service `User.create(...)`, which is implemented like this:
 
 ```
 module User
@@ -57,23 +61,33 @@ module User
 end
 ```
 
-### How to publish an event (out of band)
+### How to publish an unpublished model event (out of band)
 
 ```bash
 bin/message_publisher
 ```
 
-This script enumerates through all unpublished messages and events, calling a handler for each one. A router can route events to functions based on the event name. Alternatively, you can queue Sidekiq workers. This is the best place to call external APIs.
+This script enumerates through all unpublished messages and events, calling a handler for each one.
 
-## Additional Improvements
+### How to react to a model event being published (out of band)
+
+The publisher would be updated to route events to stateless handler functions based on the `event.name` (e.g. `User.created`).
+
+This is the best place to call external APIs.
+
+Existing job processing infrastructure such as sidekiq workers can also be integrated.
+
+Main point is that heavy lifting is done outside of web requests, based on events.
+
+## Future Improvements
+
+### Generate supporting code via gem
+
+Create schema, model, test and publisher code via a generator, which can be included in a separate gem and required into main app.
 
 ### Multitenant Support
 
 This application supports multitenancy, allowing for separate, isolated user spaces.
-
-### Accessing User
-
-You can access the user model via the API or directly from the database for additional operations and customization.
 
 ## Contributing
 
