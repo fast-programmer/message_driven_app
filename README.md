@@ -35,16 +35,17 @@ RAILS_ENV=development bin/rake db:create
 RAILS_ENV=development bin/rake db:migrate
 ```
 
-And finally, start the server.
-
-```bash
-RAILS_ENV=development bin/rails s
-```
-
 ### How to create an unpublished model event (in band)
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"user": {"email": "test@example.com"}}' http://localhost:3000/api/users
+RAILS_ENV=development bin/rails c
+```
+
+```
+ActiveRecord::Base.transaction do
+  user = Models::User.create(email: email)
+  user.events.create!(name: 'User.create')
+end
 ```
 
 ```
@@ -58,30 +59,16 @@ irb(main):005:0> Models::User.find(1).events.map { |event| event.name }
 => ["User.created"]
 ```
 
-Note `Api::UserController#create` calls the application service `User.create(...)`, which is implemented like this:
-
-```
-module User
-  def create(email:, created_at: Time.now.utc)
-    user = nil
-
-    ActiveRecord::Base.transaction do
-      user = Models::User.create(email: email, created_at: created_at)
-      user.events.create!(name: 'User.create')
-    end
-
-    user
-  end
-end
-```
-
 ### How to publish an unpublished model event (out of band)
 
 ```bash
 bin/message_publisher
 ```
 
-This script enumerates through all unpublished messages and events, calling a handler for each one.
+This script enumerates through all unpublished events, calling a handler for each one and
+
+* if the handler did not throw an exception, the message status is set to `published`
+* if the handler did throw an exception, the message status is set to `failed`
 
 ### How to react to a model event being published (out of band)
 
