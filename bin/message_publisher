@@ -4,15 +4,12 @@ ENV['RAILS_ENV'] ||= 'development'
 require_relative '../config/environment'
 
 def handle(message:)
-  puts "Handling message #{message.id}: #{message.name}"
+  puts "Publishing message #{message.id}: #{message.name}"
 
-  case message.name
-  when 'User.created'
-    ActiveCampaignIntegration::User.created(message: message)
-    MailChimpIntegration::User.created(message: message)
-  end
+  ActiveCampaignIntegration::MessageHandler.call(message: message)
+  MailchimpIntegration::MessageHandler.call(message: message)
 
-  puts "Handled message #{message.id}: #{message.name}"
+  puts "Published message #{message.id}: #{message.name}"
 end
 
 Signal.trap('INT') { exit }
