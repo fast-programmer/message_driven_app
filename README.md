@@ -56,7 +56,7 @@ end
 SELECT * FROM messages ORDER BY created_at ASC;
 ```
 
-![Screenshot from 2023-06-14 02-45-38](https://github.com/fast-programmer/message_driven_app/assets/394074/fe34c94f-2de8-4264-8a3d-0753c8b6499d)
+![Screenshot from 2023-06-14 09-23-09](https://github.com/fast-programmer/message_driven_app/assets/394074/bfb63ab4-f758-4de7-8f56-5974b8d4ea8e)
 
 ```
 irb(main):005:0> Models::User.find(1).events.map { |event| event.name }
