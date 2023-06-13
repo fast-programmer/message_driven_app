@@ -5,6 +5,14 @@ require_relative '../config/environment'
 
 def handle(message:)
   puts "Handling message #{message.id}: #{message.name}"
+
+  case message.name
+  when 'User.created'
+    ActiveCampaignIntegration::User.created(message: message)
+    MailChimpIntegration::User.created(message: message)
+  end
+
+  puts "Handled message #{message.id}: #{message.name}"
 end
 
 Signal.trap('INT') { exit }
