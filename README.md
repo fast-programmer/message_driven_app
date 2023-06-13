@@ -1,6 +1,10 @@
 # Event-Driven Architecture Demo with Ruby on Rails
 
-This project illustrates how to build an event-driven architecture in Ruby on Rails, following many Doman Driven Design best practices.
+This project illustrates how to build an event-driven architecture in Ruby on Rails, following many Doman Driven Design best practices including:
+
+1. **layered architecture**: HTTP, GraphQL, ruby console -> calls stateless application service -> orchestrates models
+2. **modularised monolith**: models exist in subdomains, and subdomains communicate with each other indirectly via model events
+3. **aggregate consistency**: lock version on all model aggregates protects against multithreading bugs
 
 ## Benefits of Event-Driven Architecture (EDA)
 
@@ -16,7 +20,7 @@ This project illustrates how to build an event-driven architecture in Ruby on Ra
 
 ## Conceptual Model Example
 
-![Screenshot from 2023-06-14 02-50-06](https://github.com/fast-programmer/message_driven_app/assets/394074/1c3f3612-9159-4032-bf57-8eee6ff87243)
+![Screenshot from 2023-06-14 08-56-18](https://github.com/fast-programmer/message_driven_app/assets/394074/1598fd47-c9ac-4caa-bf0b-df69310bc166)
 
 ## Getting Started
 
@@ -43,7 +47,7 @@ RAILS_ENV=development bin/rails c
 
 ```
 ActiveRecord::Base.transaction do
-  user = Models::User.create(email: 'test@example.com')
+  user = IAM::Models::User.create(email: 'test@example.com')
   user.events.create!(name: 'User.create')
 end
 ```
@@ -52,10 +56,10 @@ end
 SELECT * FROM messages ORDER BY created_at ASC;
 ```
 
-![Screenshot from 2023-06-14 02-45-38](https://github.com/fast-programmer/message_driven_app/assets/394074/fe34c94f-2de8-4264-8a3d-0753c8b6499d)
+![Screenshot from 2023-06-14 09-23-09](https://github.com/fast-programmer/message_driven_app/assets/394074/bfb63ab4-f758-4de7-8f56-5974b8d4ea8e)
 
 ```
-irb(main):005:0> Models::User.find(1).events.map { |event| event.name }
+irb(main):005:0> IAM::Models::User.find(1).events.map { |event| event.name }
 => ["User.created"]
 ```
 
@@ -82,13 +86,17 @@ Main point is that heavy lifting is done outside of web requests, based on event
 
 ## Future Improvements
 
-### Automated Code Generation via Gem
+### 1. Support concurrency in publisher
+
+Use a pool of worker threads to handle more than 1 event concurrently.
+
+### 2. Automated Code Generation via Gem
 
 Automate the creation of the schema, model, test, and publisher code through a generator. This generator could be included in a separate gem and required into the main app.
 
-### Multitenant Support
+### 3. Add Multitenant Support
 
-Allowing for separate, isolated user spaces.
+Allow for separate, isolated user spaces.
 
 ## Contributing
 
