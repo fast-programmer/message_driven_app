@@ -43,7 +43,7 @@ RAILS_ENV=development bin/rails c
 
 ```
 ActiveRecord::Base.transaction do
-  user = Models::User.create(email: email)
+  user = Models::User.create(email: 'test@example.com')
   user.events.create!(name: 'User.create')
 end
 ```
@@ -82,9 +82,9 @@ Main point is that heavy lifting is done outside of web requests, based on event
 
 ## Future Improvements
 
-### Generate supporting code via gem
+### Automated Code Generation via Gem
 
-Create schema, model, test and publisher code via a generator, which can be included in a separate gem and required into main app.
+Automate the creation of the schema, model, test, and publisher code through a generator. This generator could be included in a separate gem and required into the main app.
 
 ### Multitenant Support
 
