@@ -46,6 +46,10 @@ RAILS_ENV=development bin/rails c
 ```
 
 ```
+IAM::User.create(email: 'test@example.com')
+
+# OR
+
 ActiveRecord::Base.transaction do
   user = IAM::Models::User.create(email: 'test@example.com')
   user.events.create!(name: 'User.create')
@@ -56,11 +60,11 @@ end
 SELECT * FROM messages ORDER BY created_at ASC;
 ```
 
-![Screenshot from 2023-06-14 09-23-09](https://github.com/fast-programmer/message_driven_app/assets/394074/bfb63ab4-f758-4de7-8f56-5974b8d4ea8e)
+![Screenshot from 2023-06-14 09-37-25](https://github.com/fast-programmer/message_driven_app/assets/394074/44128fc6-e983-4041-846e-0461984e1719)
 
 ```
-irb(main):005:0> IAM::Models::User.find(1).events.map { |event| event.name }
-=> ["User.created"]
+irb(main):005:0> IAM::Models::User.find(2).events.map { |event| event.name }
+=> ["IAM::User.created"]
 ```
 
 ### How to publish an unpublished model event (out of band)
@@ -69,14 +73,16 @@ irb(main):005:0> IAM::Models::User.find(1).events.map { |event| event.name }
 bin/message_publisher
 ```
 
-This script enumerates through all unpublished events, calling a handler for each one and
+This script enumerates through all unpublished events, calling message handlers in each subdomain
 
-* if the handler did not throw an exception, the message status is set to `published`
-* if the handler did throw an exception, the message status is set to `failed`
+* if the handlers do not throw any exceptions, set the message status to `published`
+* if the handlers do throw an exception, set the message status to `failed`
 
 ### How to react to a model event being published (out of band)
 
-The publisher would be updated to route events to stateless handler functions based on the `event.name` (e.g. `User.created`).
+The publisher broadcasts each event to all subdomain message handlers.
+
+Inside each subdomain message handler, messages are routed to handlers based on `event.name` (e.g. `User.created`).
 
 This is the best place to call external APIs.
 
