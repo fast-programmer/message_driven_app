@@ -11,7 +11,7 @@ module Api
         it 'creates a new user' do
           expect {
             post :create, params: valid_params
-          }.to change(Models::User, :count).by(1)
+          }.to change(IAM::Models::User, :count).by(1)
         end
 
         it 'returns status :created' do
@@ -21,7 +21,7 @@ module Api
 
         it 'returns the created user as JSON' do
           post :create, params: valid_params
-          created_user = Models::User.last
+          created_user = IAM::Models::User.last
           expect(JSON.parse(response.body)['email']).to eq(created_user.email)
         end
       end
@@ -32,7 +32,7 @@ module Api
         it 'does not create a new user' do
           expect {
             post :create, params: invalid_params
-          }.not_to change(Models::User, :count)
+          }.not_to change(IAM::Models::User, :count)
         end
 
         it 'returns status :unprocessable_entity' do

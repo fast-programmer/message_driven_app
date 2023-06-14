@@ -8,7 +8,7 @@ module IAM
       let(:user) { { email: 'tester@fastprogrammer.co' } }
       let(:event) do
         {
-          name: 'User.created',
+          name: 'IAM::User.created',
           body: { 'description' => 'testing' }
         }
       end

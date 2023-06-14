@@ -11,12 +11,12 @@ module Models
     belongs_to :messageable, polymorphic: true
 
     STATUS = {
-      unpublished: 'unpublished',
-      publishing: 'publishing',
-      published: 'published',
+      unhandled: 'unhandled',
+      handling: 'handling',
+      handled: 'handled',
       failed: 'failed'
     }.freeze
 
-    attribute :status, :text, default: STATUS[:unpublished]
+    attribute :status, :text, default: STATUS[:unhandled]
   end
 end

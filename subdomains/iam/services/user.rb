@@ -11,7 +11,7 @@ module IAM
         user = Models::User.new(email: email, created_at: created_at)
         raise Error.new(user.errors.full_messages.to_sentence) unless user.save
 
-        event = user.events.build(user_id: user.id, name: 'User.created', created_at: created_at)
+        event = user.events.build(user_id: user.id, name: 'IAM::User.created', created_at: created_at)
         raise Error.new(event.errors.full_messages.to_sentence) unless event.save
       end
 

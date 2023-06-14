@@ -21,15 +21,20 @@ loop do
   message = nil
 
   ActiveRecord::Base.transaction do
-    message = Models::Message.where(status: Message::STATUS[:unpublished]).order(:created_at).lock(true).first
-    message&.update!(status: Message::STATUS[:publishing])
+    message = Models::Message
+                .where(status: Message::STATUS[:unhandled])
+                .order(created_at: :asc)
+                .lock('FOR UPDATE SKIP LOCKED')
+                .first
+
+    message&.update!(status: Message::STATUS[:handling])
   end
 
   if message
     begin
       handle(message: message)
 
-      message.update!(status: Message::STATUS[:published])
+      message.update!(status: Message::STATUS[:handled])
     rescue StandardError => e
       message.update!(status: Message::STATUS[:failed])
 
