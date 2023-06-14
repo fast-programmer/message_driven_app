@@ -3,48 +3,8 @@
 ENV['RAILS_ENV'] ||= 'development'
 require_relative '../config/environment'
 
-require_relative '../subdomains/active_campaign_integration/message_handler'
-require_relative '../subdomains/mailchimp_integration/message_handler'
-
-def handle(message:)
-  puts "Publishing message #{message.id}: #{message.name}"
-
-  ActiveCampaignIntegration::MessageHandler.call(message: message)
-  MailchimpIntegration::MessageHandler.call(message: message)
-
-  puts "Published message #{message.id}: #{message.name}"
-end
+require_relative '../subdomains/message_handler'
 
 Signal.trap('INT') { exit }
 
-loop do
-  message = nil
-
-  ActiveRecord::Base.transaction do
-    message = Models::Message
-                .where(status: Message::STATUS[:unhandled])
-                .order(created_at: :asc)
-                .lock('FOR UPDATE SKIP LOCKED')
-                .first
-
-    message&.update!(status: Message::STATUS[:handling])
-  end
-
-  if message
-    begin
-      handle(message: message)
-
-      message.update!(status: Message::STATUS[:handled])
-    rescue StandardError => e
-      message.update!(status: Message::STATUS[:failed])
-
-      puts "An error occurred while handling message #{message.id}: #{e.message}"
-
-      raise
-    end
-  else
-    puts 'No events found, sleeping...'
-
-    sleep 1
-  end
-end
+Message.handle(handler: MessageHandler)
