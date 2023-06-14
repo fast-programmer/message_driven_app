@@ -5,6 +5,10 @@ require_relative '../config/environment'
 
 require_relative '../subdomains/message_handler'
 
-Signal.trap('INT') { exit }
+Signal.trap('INT') do
+  Messages.shutdown()
 
-Message.handle(handler: MessageHandler, concurrency: 1)
+  exit
+end
+
+Messages.handle(handler: MessageHandler)

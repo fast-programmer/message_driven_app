@@ -1,2 +1,5 @@
-user = Models.User.create!(email: 'tester@fastprogrammer.co')
-user.events.create!(name: 'User.created', body: { 'descripton' => 'testing' })
+require_relative '../subdomains/iam/services/user'
+
+(1..6).each do |number|
+  IAM::User.create(email: "user#{number}@fastprogrammer.co")
+end

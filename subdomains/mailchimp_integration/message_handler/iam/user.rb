@@ -5,7 +5,7 @@ module MailchimpIntegration
         extend self
 
         def created(message:)
-          console.log('called message handler: MailchimpIntegration::IAM::User.created')
+          # puts('called message handler: MailchimpIntegration::IAM::User.created')
 
           # TODO: list.add_member(email: message.body.email)
         end
