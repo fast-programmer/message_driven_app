@@ -197,6 +197,7 @@ PLATFORMS
 DEPENDENCIES
   bootsnap (>= 1.4.2)
   byebug
+  concurrent-ruby
   jbuilder (~> 2.7)
   listen (~> 3.2)
   pg (>= 0.18, < 2.0)
@@ -204,7 +205,6 @@ DEPENDENCIES
   rails (~> 6.0.6, >= 6.0.6.1)
   rspec-rails (~> 5.0)
   sass-rails (>= 6)
-  tzinfo-data
   web-console (>= 3.3.0)
 
 RUBY VERSION

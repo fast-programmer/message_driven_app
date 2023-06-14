@@ -7,4 +7,4 @@ require_relative '../subdomains/message_handler'
 
 Signal.trap('INT') { exit }
 
-Message.handle(handler: MessageHandler)
+Message.handle(handler: MessageHandler, concurrency: 1)
