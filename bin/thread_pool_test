@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+
+ENV['RAILS_ENV'] ||= 'development'
+require_relative '../config/environment'
+
+require 'concurrent-ruby'
+
+Signal.trap('INT') do
+  @is_running = false
+
+  exit
+end
+
+@is_running = true
+
+concurrency = 5
+
+executor = Concurrent::ThreadPoolExecutor.new(
+  min_threads: 0,
+  max_threads: concurrency,
+  max_queue: 1,
+  idletime: 1,
+  fallback_policy: :abort
+)
+
+while @is_running
+  # remaining_capacity = (concurrency + 1) - executor.length - executor.queue_length
+  # puts "before: #{remaining_capacity} = #{concurrency + 1} - #{executor.length} - #{executor.queue_length}"
+
+  (1..6).each do |number|
+    success = false
+
+    while !success
+      begin
+        res = executor.post do
+          puts("#{number} executor.post finished")
+        end
+
+        puts(res)
+
+        success = true
+      rescue Concurrent::RejectedExecutionError => e
+        puts("#{number} executor.post failed")
+      end
+
+      sleep(1) unless success # Sleep for 1 second before retrying if success is not achieved
+    end
+  end
+
+  # remaining_capacity = (concurrency + 1) - executor.length - executor.queue_length
+  # puts "before sleep: #{remaining_capacity} = #{concurrency + 1} - #{executor.length} - #{executor.queue_length}"
+
+  puts('sleep 0.2')
+  sleep(0.2)
+
+  # remaining_capacity = (concurrency + 1) - executor.length - executor.queue_length
+  # puts "after sleep: #{remaining_capacity} = #{concurrency + 1} - #{executor.length} - #{executor.queue_length}"
+
+  executor.post do
+    puts("7 executor.post finished")
+  end
+
+  puts('sleep 0.2')
+  sleep(0.2)
+
+  # remaining_capacity = (concurrency + 1) - executor.length - executor.queue_length
+  # puts "after sleep: #{remaining_capacity} = #{concurrency + 1} - #{executor.length} - #{executor.queue_length}"
+
+  executor.post do
+    puts("8 executor.post finished")
+  end
+
+  # sleep(5)
+  # puts('sleep 5')
+
+  # remaining_capacity = (concurrency + 1) - executor.length - executor.queue_length
+  # puts "after sleep after post: #{remaining_capacity} = #{concurrency + 1} - #{executor.length} - #{executor.queue_length}"
+end

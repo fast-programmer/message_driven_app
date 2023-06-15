@@ -8,6 +8,7 @@ gem 'puma', '~> 4.1'
 gem 'rails', '~> 6.0.6', '>= 6.0.6.1'
 gem 'jbuilder', '~> 2.7'
 gem 'sass-rails', '>= 6'
+gem 'colorize'
 gem 'concurrent-ruby'
 
 gem 'bootsnap', '>= 1.4.2', require: false
