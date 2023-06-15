@@ -4,10 +4,10 @@ module MailchimpIntegration
   module MessageHandler
     extend self
 
-    def call(message:)
+    def call(message:, logger:)
       case message.name
       when 'IAM::User.created'
-        IAM::User.created(message: message)
+        IAM::User.created(message: message, logger: logger)
       end
     end
   end

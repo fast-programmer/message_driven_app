@@ -4,9 +4,8 @@ module MailchimpIntegration
       module User
         extend self
 
-        def created(message:)
-          sleep(2)
-          # puts('called message handler: MailchimpIntegration::IAM::User.created')
+        def created(message:, logger:)
+          sleep(0.2)
 
           # TODO: list.add_member(email: message.body.email)
         end

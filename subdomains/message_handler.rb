@@ -4,12 +4,12 @@ require_relative 'mailchimp_integration/message_handler'
 module MessageHandler
   module_function
 
-  def handle(message:, stdout_logger:, stderr_logger:)
-    stdout_logger.info("Handling message #{message.id}: #{message.name}")
+  def handle(message:, logger:)
+    logger.info("message #{message.id} > handling #{message.name}")
 
-    ActiveCampaignIntegration::MessageHandler.call(message: message)
-    MailchimpIntegration::MessageHandler.call(message: message)
+    ActiveCampaignIntegration::MessageHandler.call(message: message, logger: logger)
+    MailchimpIntegration::MessageHandler.call(message: message, logger: logger)
 
-    stdout_logger.info("Handled message #{message.id}: #{message.name}")
+    logger.info("message #{message.id} > handled #{message.name}")
   end
 end

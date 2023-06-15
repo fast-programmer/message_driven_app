@@ -4,9 +4,8 @@ module ActiveCampaignIntegration
       module User
         extend self
 
-        def created(message:)
-          sleep(2)
-          # puts('called message handler: ActiveCampaignIntegration::IAM::User.created')
+        def created(message:, logger:)
+          sleep(0.2)
 
           # TODO: Contact.create(email: message.body.email)
         end
