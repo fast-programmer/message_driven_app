@@ -9,6 +9,7 @@ IAM::Models::User.delete_all
 ActiveRecord::Base.connection.execute("SELECT setval('messages_id_seq', 1, false)")
 ActiveRecord::Base.connection.execute("SELECT setval('users_id_seq', 1, false)")
 
-(1..100).each do |number|
-  IAM::User.create(email: "user#{number}@fastprogrammer.co")
+(1..10).each do |number|
+  user = IAM::User.create(email: "user#{number}@fastprogrammer.co")
+  IAM::User.sync_async(user_id: user.id, id: user.id)
 end

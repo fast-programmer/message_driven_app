@@ -5,4 +5,4 @@ require_relative '../config/environment'
 
 require_relative '../subdomains/message_handler'
 
-Messages.handle(handler: MessageHandler, poll: 1, concurrency: 10)
+Messages.handle(handler: MessageHandler, poll: 1, concurrency: 1)

@@ -6,7 +6,7 @@ module MailchimpIntegration
 
     def call(message:, logger:)
       case message.name
-      when 'IAM::User.created'
+      when 'IAM::Messages::User.created'
         IAM::User.created(message: message, logger: logger)
       end
     end

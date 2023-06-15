@@ -1,13 +1,13 @@
 class CreateMessages < ActiveRecord::Migration[6.0]
   def change
     create_table :messages do |t|
-      t.text :type, null: false
-      t.text :messageable_type, null: false
-      t.bigint :messageable_id, null: false
       t.bigint :user_id, null: false
       t.text :name, null: false
-      t.text :status, null: false
+      t.text :type, null: false
       t.jsonb :body
+      t.text :status, null: false
+      t.text :messageable_type, null: false
+      t.bigint :messageable_id, null: false
       t.timestamps
     end
 
