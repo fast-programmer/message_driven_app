@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+Signal.trap("INT") do
+  puts "Exiting..."
+  exit
+end
+
+queue = Queue.new
+
+workers = Array.new(2) do
+  Thread.new do
+    loop do
+      begin
+        task = queue.pop(true)
+        puts "Thread #{Thread.current} processing number #{task}"
+        sleep(rand(0..2))
+      rescue ThreadError
+        sleep 1
+      end
+    end
+  end
+end
+
+while true
+  puts "Enter numbers separated by commas: "
+  input = gets.chomp.split(',')
+
+  input.each { |i| queue << i }
+end
