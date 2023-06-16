@@ -14,8 +14,11 @@ require_relative '../app/models/command'
 
 require_relative '../app/services/message'
 
-require_relative '../subdomains/iam/models/user'
-require_relative '../subdomains/iam/services/user'
+require_relative '../subdomains/iam'
+require_relative '../subdomains/active_campaign_integration'
+require_relative '../subdomains/mailchimp_integration'
+
+require_relative '../app/handlers/handler'
 
 module MessageDrivenApp
   class Application < Rails::Application

@@ -1,5 +1,7 @@
-module MailchimpIntegration
-  module MessageHandler
+require_relative 'user'
+
+module ActiveCampaignIntegration
+  module Handlers
     module IAM
       module User
         extend self
@@ -7,7 +9,7 @@ module MailchimpIntegration
         def created(message:, logger:)
           sleep(0.2)
 
-          # TODO: list.add_member(email: message.body.email)
+          # TODO: Contact.create(email: message.body.email)
         end
       end
     end
