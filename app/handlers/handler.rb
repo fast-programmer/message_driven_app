@@ -5,7 +5,6 @@ module Handlers
     def handle(message:, logger:)
       logger.info("message #{message.id} > handling #{message.name}")
 
-      IAM::Handlers::Handler.handle(message: message, logger: logger)
       ActiveCampaignIntegration::Handlers::Handler.handle(message: message, logger: logger)
       MailchimpIntegration::Handlers::Handler.handle(message: message, logger: logger)
 

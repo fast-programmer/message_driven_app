@@ -1,4 +1,4 @@
-require_relative 'iam/user'
+require_relative 'user'
 
 module MailchimpIntegration
   module Handlers
@@ -7,8 +7,8 @@ module MailchimpIntegration
 
       def handle(message:, logger:)
         case message.name
-        when 'IAM::Messages::User.created'
-          IAM::User.created(message: message, logger: logger)
+        when 'Messages::User.created'
+          User.created(message: message, logger: logger)
         end
       end
     end

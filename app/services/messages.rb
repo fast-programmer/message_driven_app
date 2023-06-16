@@ -75,7 +75,7 @@ module Messages
     ActiveRecord::Base.transaction do
       message = Models::Message
                   .where(status: Models::Message::STATUS[:unhandled])
-                  .where('queued_until IS NULL OR queued_until < ?', Time.current)
+                  .where('queued_until IS NULL OR queued_until < ?', current_time)
                   .order(created_at: :asc)
                   .limit(1)
                   .lock('FOR UPDATE SKIP LOCKED')

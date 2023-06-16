@@ -3,10 +3,10 @@ module Api
     protect_from_forgery with: :null_session
 
     def create
-      user = IAM::User.create(email: user_params[:email])
+      user = User.create(email: user_params[:email])
 
       render json: user, status: :created
-    rescue IAM::User::Error => e
+    rescue User::Error => e
       render json: { errors: e.message }, status: :unprocessable_entity
     end
 

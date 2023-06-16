@@ -10,10 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_06_13_050356) do
+ActiveRecord::Schema.define(version: 2023_06_16_193741) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "accounts", force: :cascade do |t|
+    t.integer "lock_version", default: 0, null: false
+    t.text "name", null: false
+    t.text "slug", null: false
+    t.bigint "owner_id", null: false
+    t.index ["owner_id"], name: "index_accounts_on_owner_id"
+  end
 
   create_table "messages", force: :cascade do |t|
     t.bigint "user_id", null: false
@@ -35,6 +43,14 @@ ActiveRecord::Schema.define(version: 2023_06_13_050356) do
     t.index ["type"], name: "index_messages_on_type"
   end
 
+  create_table "user_accounts", force: :cascade do |t|
+    t.integer "lock_version", default: 0, null: false
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.index ["account_id"], name: "index_user_accounts_on_account_id"
+    t.index ["user_id"], name: "index_user_accounts_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.integer "lock_version", default: 0, null: false
     t.text "email", null: false
@@ -42,5 +58,8 @@ ActiveRecord::Schema.define(version: 2023_06_13_050356) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  add_foreign_key "accounts", "users", column: "owner_id"
   add_foreign_key "messages", "users"
+  add_foreign_key "user_accounts", "accounts"
+  add_foreign_key "user_accounts", "users"
 end
