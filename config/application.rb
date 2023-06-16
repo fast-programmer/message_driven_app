@@ -12,7 +12,7 @@ require_relative '../app/models/message'
 require_relative '../app/models/event'
 require_relative '../app/models/command'
 
-require_relative '../app/services/message'
+require_relative '../app/services/messages'
 
 require_relative '../subdomains/iam'
 require_relative '../subdomains/active_campaign_integration'

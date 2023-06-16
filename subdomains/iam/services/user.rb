@@ -7,7 +7,7 @@ module IAM
     class Error < StandardError; end
     class NotFound < StandardError; end
 
-    def create(email:, created_at: Time.now.utc)
+    def create(email:, current_time: Time.current)
       ActiveRecord::Base.transaction do
         user = Models::User.create!(email: email)
         user_created_event = Messages::User.created(email: email)
@@ -49,7 +49,7 @@ module IAM
       raise Error.new(e.record.errors.full_messages.to_sentence)
     end
 
-    def sync(user_id:, id:, created_at: Time.now.utc)
+    def sync(user_id:, id:, current_time: Time.current)
       user = Models::User.find(id)
       synced_user_event = Messages::User.synced
 

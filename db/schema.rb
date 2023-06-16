@@ -23,8 +23,12 @@ ActiveRecord::Schema.define(version: 2023_06_13_050356) do
     t.text "status", null: false
     t.text "messageable_type", null: false
     t.bigint "messageable_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "queued_until"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "error_class_name"
+    t.text "error_message"
+    t.text "error_backtrace", array: true
     t.index ["messageable_type", "messageable_id"], name: "index_messages_on_messageable_type_and_messageable_id"
     t.index ["status", "created_at"], name: "index_messages_on_status_and_created_at"
     t.index ["status"], name: "index_messages_on_status"

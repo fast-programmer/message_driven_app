@@ -8,7 +8,15 @@ class CreateMessages < ActiveRecord::Migration[6.0]
       t.text :status, null: false
       t.text :messageable_type, null: false
       t.bigint :messageable_id, null: false
-      t.timestamps
+
+      t.column :queued_until, 'timestamptz'
+
+      t.column :created_at, 'timestamptz', null: false
+      t.column :updated_at, 'timestamptz', null: false
+
+      t.text :error_class_name
+      t.text :error_message
+      t.text :error_backtrace, array: true
     end
 
     add_foreign_key :messages, :users, column: :user_id
