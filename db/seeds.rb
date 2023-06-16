@@ -3,8 +3,6 @@ require_relative '../app/models/user_account'
 require_relative '../app/models/user'
 require_relative '../app/models/account'
 
-# require_relative '../app/services/user'
-
 Models::Message.delete_all
 Models::UserAccount.delete_all
 Models::Account.delete_all

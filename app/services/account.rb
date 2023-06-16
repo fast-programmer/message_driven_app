@@ -14,6 +14,7 @@ module Account
       account_created_event = Messages::Account.created(name: name, slug: slug, owner_id: owner_id)
 
       account.events.create!(
+        account: account,
         user: user,
         name: account_created_event.name,
         body: account_created_event.body

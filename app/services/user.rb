@@ -33,6 +33,7 @@ module User
     sync_user_command = Messages::User.sync
 
     user.commands.create!(
+      account_id: account_id,
       user_id: user.id,
       name: sync_user_command.name,
       body: sync_user_command.body

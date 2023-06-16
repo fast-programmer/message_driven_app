@@ -24,6 +24,7 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
   end
 
   create_table "messages", force: :cascade do |t|
+    t.bigint "account_id"
     t.bigint "user_id", null: false
     t.text "name", null: false
     t.text "type", null: false
@@ -59,6 +60,7 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
   end
 
   add_foreign_key "accounts", "users", column: "owner_id"
+  add_foreign_key "messages", "accounts"
   add_foreign_key "messages", "users"
   add_foreign_key "user_accounts", "accounts"
   add_foreign_key "user_accounts", "users"
