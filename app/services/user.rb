@@ -12,6 +12,7 @@ module User
       user_created_event = Messages::User.created(email: email)
 
       user.events.create!(
+        queue_id: Queues.Default.id,
         user: user,
         name: user_created_event.name,
         body: user_created_event.body
@@ -33,10 +34,12 @@ module User
     sync_user_command = Messages::User.sync
 
     user.commands.create!(
+      queue_id: Queues.Default.id,
       account_id: account_id,
       user_id: user.id,
       name: sync_user_command.name,
-      body: sync_user_command.body
+      body: sync_user_command.body,
+      retry_limit: 3
     )
 
     user.readonly!
@@ -49,11 +52,13 @@ module User
     raise Error.new(e.record.errors.full_messages.to_sentence)
   end
 
-  def sync(user_id:, id:, current_time: Time.current)
+  def sync(account_id:, user_id:, id:, current_time: Time.current)
     user = Models::User.find(id)
     synced_user_event = Messages::User.synced
 
     user.events.create!(
+      queue_id: Queues.Default.id,
+      account_id: account_id,
       user_id: user_id,
       name: synced_user_event.name,
       body: synced_user_event.body

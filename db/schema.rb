@@ -24,6 +24,7 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
   end
 
   create_table "messages", force: :cascade do |t|
+    t.bigint "queue_id", null: false
     t.bigint "account_id"
     t.bigint "user_id", null: false
     t.text "name", null: false
@@ -33,6 +34,8 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
     t.text "messageable_type", null: false
     t.bigint "messageable_id", null: false
     t.datetime "queued_until"
+    t.integer "retry_count", default: 0, null: false
+    t.integer "retry_limit", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "error_class_name"
@@ -42,6 +45,12 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
     t.index ["status", "created_at"], name: "index_messages_on_status_and_created_at"
     t.index ["status"], name: "index_messages_on_status"
     t.index ["type"], name: "index_messages_on_type"
+  end
+
+  create_table "queues", force: :cascade do |t|
+    t.integer "lock_version", default: 0, null: false
+    t.text "name", null: false
+    t.index ["name"], name: "index_queues_on_name", unique: true
   end
 
   create_table "user_accounts", force: :cascade do |t|
@@ -61,6 +70,7 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
 
   add_foreign_key "accounts", "users", column: "owner_id"
   add_foreign_key "messages", "accounts"
+  add_foreign_key "messages", "queues"
   add_foreign_key "messages", "users"
   add_foreign_key "user_accounts", "accounts"
   add_foreign_key "user_accounts", "users"

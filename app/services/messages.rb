@@ -34,35 +34,47 @@ module Messages
     logger
   end
 
-  def self.handle(handler:, poll:, concurrency:, current_time: Time.current)
+  def self.handle(queue_id:, handler:, poll:, concurrency:, current_time: Time.current)
     logger = create_logger(STDOUT)
 
     workers = Array.new(concurrency) do
       Thread.new do
         loop do
-          message = shift(logger: logger, current_time: current_time)
+          message = shift(queue_id: queue_id, logger: logger, current_time: current_time)
 
           if message.nil?
-            logger.info("no messages to handle")
-
+            logger.info("No messages to handle")
             sleep poll
-
             next
           end
 
-          begin
-            handler.handle(message: message, logger: logger)
+          success = false
 
-            message.update!(status: Models::Message::STATUS[:handled])
-          rescue StandardError => e
-            logger.error("failed to handle #{e.message} message #{message.id}")
+          while !success
+            begin
+              handler.handle(message: message, logger: logger, queue: queue)
+              message.update!(status: Models::Message::STATUS[:handled])
+              success = true
+            rescue StandardError => e
+              logger.error("Failed to handle message #{message.id}: #{e.message}")
 
-            message.update!(
-              status: Models::Message::STATUS[:failed],
-              error_class_name: e.class.name,
-              error_message: e.message,
-              error_backtrace: e.backtrace
-            )
+              if message.retry_count < message.retry_limit
+                message.retry_count += 1
+                message.queued_until = calculate_queued_until(message.retry_count)
+                message.save
+
+                logger.info("Retry #{message.retry_count} scheduled for message #{message.id}.")
+              else
+                logger.error("Exceeded retry limit for message #{message.id}. Marking as failed.")
+
+                message.update!(
+                  status: Models::Message::STATUS[:failed],
+                  error_class_name: e.class.name,
+                  error_message: e.message,
+                  error_backtrace: e.backtrace
+                )
+              end
+            end
           end
         end
       end
@@ -71,9 +83,19 @@ module Messages
     workers.each { |worker| worker.join }
   end
 
-  def self.shift(logger:, current_time:)
+  def self.calculate_queued_until(retry_count)
+    backoff_time = sidekiq_like_backoff(retry_count)
+    Time.current + backoff_time
+  end
+
+  def self.sidekiq_like_backoff(retry_count)
+    (retry_count ** 4) + 15 + (rand(30) * (retry_count + 1))
+  end
+
+  def self.shift(queue_id:, logger:, current_time:)
     ActiveRecord::Base.transaction do
       message = Models::Message
+                  .where(queue_id: queue_id)
                   .where(status: Models::Message::STATUS[:unhandled])
                   .where('queued_until IS NULL OR queued_until < ?', current_time)
                   .order(created_at: :asc)

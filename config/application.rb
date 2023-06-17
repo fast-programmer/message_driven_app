@@ -10,6 +10,7 @@ Bundler.require(*Rails.groups)
 require_relative '../app/models/application_record'
 require_relative '../app/models/user'
 require_relative '../app/models/account'
+require_relative '../app/models/queue'
 require_relative '../app/models/message'
 require_relative '../app/models/event'
 require_relative '../app/models/command'
@@ -19,6 +20,7 @@ require_relative '../app/messages/account'
 
 require_relative '../app/services/user'
 require_relative '../app/services/account'
+require_relative '../app/queues/default'
 require_relative '../app/services/messages'
 
 require_relative '../subdomains/active_campaign_integration'
