@@ -1,8 +1,12 @@
+require_relative '../app/models/messaging/retry'
+require_relative '../app/models/messaging/error'
 require_relative '../app/models/messaging/message'
 require_relative '../app/models/user_account'
 require_relative '../app/models/user'
 require_relative '../app/models/account'
 
+Models::Messaging::Retry.delete_all
+Models::Messaging::Error.delete_all
 Models::Messaging::Message.delete_all
 Models::Messaging::Queue.delete_all
 
@@ -11,8 +15,12 @@ Models::Account.delete_all
 Models::User.delete_all
 
 ActiveRecord::Base.connection.execute("SELECT setval('users_id_seq', 1, false)")
-ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 1, false)")
+ActiveRecord::Base.connection.execute("SELECT setval('accounts_id_seq', 1, false)")
+ActiveRecord::Base.connection.execute("SELECT setval('user_accounts_id_seq', 1, false)")
+
+ActiveRecord::Base.connection.execute("SELECT setval('messaging_errors_id_seq', 1, false)")
 ActiveRecord::Base.connection.execute("SELECT setval('messaging_messages_id_seq', 1, false)")
+ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 1, false)")
 
 (1..2).each do |number|
   user = User.create(email: "user#{number}@fastprogrammer.co")

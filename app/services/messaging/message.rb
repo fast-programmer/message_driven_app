@@ -4,7 +4,7 @@ require 'colorize'
 module Messaging
   Signal.trap('INT') do
 
-    Messages.shutdown
+    Message.shutdown
 
     exit
   end
@@ -55,34 +55,39 @@ module Messaging
               next
             end
 
-            success = false
+            begin
+              handler.handle(message: message, logger: logger)
+            rescue StandardError => e
+              logger.error("Failed to handle message #{message.id}: #{e.message}")
 
-            while !success
-              begin
-                handler.handle(message: message, logger: logger)
-                message.update!(status: Models::Messaging::Message::STATUS[:handled])
-                success = true
-              rescue StandardError => e
-                logger.error("Failed to handle message #{message.id}: #{e.message}")
+              ActiveRecord::Base.transaction do
+                message.messaging_errors.create!(
+                  attempt: message.messaging_errors.maximum(:attempt) || 1,
+                  class_name: e.class.name,
+                  message_text: e.message,
+                  backtrace: e.backtrace
+                )
 
-                if message.retry_count < message.retry_limit
-                  message.retry_count += 1
-                  message.queued_until = calculate_queued_until(message.retry_count)
-                  message.save
+                max_retry_attempt = message.retries.maximum(:attempt) || 0
 
-                  logger.info("Retry #{message.retry_count} scheduled for message #{message.id}.")
+                if max_retry_attempt < message.retry_limit
+                  next_retry_attempt = max_retry_attempt + 1
+                  logger.info("Retrying attempt #{next_retry_attempt} for scheduled for message #{message.id}.")
+
+                  next_queued_until = calculate_queued_until(next_retry_attempt)
+
+                  message.update!(status: Models::Messaging::Message::STATUS[:unhandled], queued_until: next_queued_until)
+                  message.retries.create!(attempt: next_retry_attempt)
                 else
                   logger.error("Exceeded retry limit for message #{message.id}. Marking as failed.")
-
-                  message.update!(
-                    status: Models::Messaging::Message::STATUS[:failed],
-                    error_class_name: e.class.name,
-                    error_message: e.message,
-                    error_backtrace: e.backtrace
-                  )
+                  message.update!(status: Models::Messaging::Message::STATUS[:failed])
                 end
               end
+
+              next
             end
+
+            message.update!(status: Models::Messaging::Message::STATUS[:handled])
           end
         end
       end
@@ -91,11 +96,12 @@ module Messaging
     end
 
     def self.calculate_queued_until(retry_count)
-      backoff_time = sidekiq_like_backoff(retry_count)
+      backoff_time = sidekiq_backoff(retry_count)
+
       Time.current + backoff_time
     end
 
-    def self.sidekiq_like_backoff(retry_count)
+    def self.sidekiq_backoff(retry_count)
       (retry_count ** 4) + 15 + (rand(30) * (retry_count + 1))
     end
 

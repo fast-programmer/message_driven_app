@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_06_16_193741) do
+ActiveRecord::Schema.define(version: 2023_06_13_050356) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -38,9 +38,6 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
     t.integer "retry_limit", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "error_class_name"
-    t.text "error_message"
-    t.text "error_backtrace", array: true
     t.index ["messageable_type", "messageable_id"], name: "index_messaging_messages_on_messageable_type_and_messageable_id"
     t.index ["status", "created_at"], name: "index_messaging_messages_on_status_and_created_at"
     t.index ["status"], name: "index_messaging_messages_on_status"

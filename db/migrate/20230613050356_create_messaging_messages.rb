@@ -18,10 +18,6 @@ class CreateMessagingMessages < ActiveRecord::Migration[6.0]
 
       t.column :created_at, 'timestamptz', null: false
       t.column :updated_at, 'timestamptz', null: false
-
-      t.text :error_class_name
-      t.text :error_message
-      t.text :error_backtrace, array: true
     end
 
     add_foreign_key :messaging_messages, :messaging_queues, column: :queue_id
