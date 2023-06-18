@@ -14,7 +14,6 @@ module Account
       account_created_event = Messages::Account.created(name: name, slug: slug, owner_id: owner_id)
 
       account.events.create!(
-        queue_id: Messaging::Queue.default_id,
         account: account,
         user: user,
         name: account_created_event.name,

@@ -8,6 +8,12 @@ module Models
       belongs_to :user
       belongs_to :messageable, polymorphic: true
 
+      after_initialize :set_default_queue, if: :new_record?
+
+      def set_default_queue
+        self.queue ||= Queue.default
+      end
+
       class Body
         def initialize(hash)
           @hash = hash

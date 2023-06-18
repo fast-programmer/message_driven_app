@@ -10,7 +10,6 @@ module User
       user_created_event = Messages::User.created(email: email)
 
       user.events.create!(
-        queue_id: Messaging::Queue.default_id,
         user: user,
         name: user_created_event.name,
         body: user_created_event.body
@@ -32,7 +31,6 @@ module User
     sync_user_command = Messages::User.sync
 
     user.commands.create!(
-      queue_id: Messaging::Queue.default_id,
       account_id: account_id,
       user_id: user.id,
       name: sync_user_command.name,
@@ -55,7 +53,6 @@ module User
     synced_user_event = Messages::User.synced
 
     user.events.create!(
-      queue_id: Messaging::Queue.default_id,
       account_id: account_id,
       user_id: user_id,
       name: synced_user_event.name,

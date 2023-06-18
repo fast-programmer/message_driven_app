@@ -1,14 +1,15 @@
 require 'logger'
 require 'colorize'
 
-Signal.trap('INT') do
-  Messages.shutdown
-
-  exit
-end
-
 module Messaging
-  module Messages
+  Signal.trap('INT') do
+
+    Messages.shutdown
+
+    exit
+  end
+
+  module Message
     @is_running = true
 
     def self.shutdown
@@ -35,7 +36,12 @@ module Messaging
       logger
     end
 
-    def self.handle(queue_id:, handler:, poll:, concurrency:, current_time: Time.current)
+    def self.handle(
+          queue_id: Models::Messaging::Queue.default_id,
+          handler:,
+          poll:,
+          concurrency:,
+          current_time: Time.current)
       logger = create_logger(STDOUT)
 
       workers = Array.new(concurrency) do
@@ -53,7 +59,7 @@ module Messaging
 
             while !success
               begin
-                handler.handle(message: message, logger: logger, queue_id: queue_id)
+                handler.handle(message: message, logger: logger)
                 message.update!(status: Models::Messaging::Message::STATUS[:handled])
                 success = true
               rescue StandardError => e
@@ -95,7 +101,7 @@ module Messaging
 
     def self.shift(queue_id:, logger:, current_time:)
       ActiveRecord::Base.transaction do
-        message = Models::Message
+        message = Models::Messaging::Message
                     .where(queue_id: queue_id)
                     .where(status: Models::Messaging::Message::STATUS[:unhandled])
                     .where('queued_until IS NULL OR queued_until < ?', current_time)

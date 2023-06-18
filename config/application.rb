@@ -20,8 +20,7 @@ require_relative '../app/messages/account'
 
 require_relative '../app/services/user'
 require_relative '../app/services/account'
-require_relative '../app/services/messaging/queue'
-require_relative '../app/services/messaging/messages'
+require_relative '../app/services/messaging/message'
 
 require_relative '../subdomains/active_campaign_integration'
 require_relative '../subdomains/mailchimp_integration'
