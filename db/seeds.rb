@@ -1,20 +1,18 @@
-require_relative '../app/models/message'
+require_relative '../app/models/messaging/message'
 require_relative '../app/models/user_account'
 require_relative '../app/models/user'
 require_relative '../app/models/account'
 
-Models::Message.delete_all
-Models::Queue.delete_all
+Models::Messaging::Message.delete_all
+Models::Messaging::Queue.delete_all
 
 Models::UserAccount.delete_all
 Models::Account.delete_all
 Models::User.delete_all
 
-ActiveRecord::Base.connection.execute("SELECT setval('messages_id_seq', 1, false)")
 ActiveRecord::Base.connection.execute("SELECT setval('users_id_seq', 1, false)")
-ActiveRecord::Base.connection.execute("SELECT setval('queues_id_seq', 1, false)")
-
-# Models::Queue.create!(id: ENV['QUEUE_ID'], name: ENV['QUEUE_NAME'])
+ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 1, false)")
+ActiveRecord::Base.connection.execute("SELECT setval('messaging_messages_id_seq', 1, false)")
 
 (1..2).each do |number|
   user = User.create(email: "user#{number}@fastprogrammer.co")

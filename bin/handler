@@ -3,8 +3,8 @@
 ENV['RAILS_ENV'] ||= 'development'
 require_relative '../config/environment'
 
-Messages.handle(
-  queue_id: Queues::Default.id,
+Messaging::Messages.handle(
+  queue_id: Messaging::Queue.default_id,
   handler: Handlers::Handler,
   poll: 1,
   concurrency: 5

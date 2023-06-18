@@ -6,7 +6,7 @@ module Account
   class Error < StandardError; end
   class NotFound < StandardError; end
 
-  def create(name:, slug:, owner_id:, queue_id: Rails.cache.read('queue').id)
+  def create(name:, slug:, owner_id:)
     user = Models::User.find(owner_id)
 
     ActiveRecord::Base.transaction do
@@ -14,7 +14,7 @@ module Account
       account_created_event = Messages::Account.created(name: name, slug: slug, owner_id: owner_id)
 
       account.events.create!(
-        queue_id: Queues.Default.id,
+        queue_id: Messaging::Queue.default_id,
         account: account,
         user: user,
         name: account_created_event.name,

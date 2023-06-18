@@ -23,7 +23,7 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
     t.index ["owner_id"], name: "index_accounts_on_owner_id"
   end
 
-  create_table "messages", force: :cascade do |t|
+  create_table "messaging_messages", force: :cascade do |t|
     t.bigint "queue_id", null: false
     t.bigint "account_id"
     t.bigint "user_id", null: false
@@ -41,16 +41,16 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
     t.text "error_class_name"
     t.text "error_message"
     t.text "error_backtrace", array: true
-    t.index ["messageable_type", "messageable_id"], name: "index_messages_on_messageable_type_and_messageable_id"
-    t.index ["status", "created_at"], name: "index_messages_on_status_and_created_at"
-    t.index ["status"], name: "index_messages_on_status"
-    t.index ["type"], name: "index_messages_on_type"
+    t.index ["messageable_type", "messageable_id"], name: "index_messaging_messages_on_messageable_type_and_messageable_id"
+    t.index ["status", "created_at"], name: "index_messaging_messages_on_status_and_created_at"
+    t.index ["status"], name: "index_messaging_messages_on_status"
+    t.index ["type"], name: "index_messaging_messages_on_type"
   end
 
-  create_table "queues", force: :cascade do |t|
+  create_table "messaging_queues", force: :cascade do |t|
     t.integer "lock_version", default: 0, null: false
     t.text "name", null: false
-    t.index ["name"], name: "index_queues_on_name", unique: true
+    t.index ["name"], name: "index_messaging_queues_on_name", unique: true
   end
 
   create_table "user_accounts", force: :cascade do |t|
@@ -69,9 +69,9 @@ ActiveRecord::Schema.define(version: 2023_06_16_193741) do
   end
 
   add_foreign_key "accounts", "users", column: "owner_id"
-  add_foreign_key "messages", "accounts"
-  add_foreign_key "messages", "queues"
-  add_foreign_key "messages", "users"
+  add_foreign_key "messaging_messages", "accounts"
+  add_foreign_key "messaging_messages", "messaging_queues", column: "queue_id"
+  add_foreign_key "messaging_messages", "users"
   add_foreign_key "user_accounts", "accounts"
   add_foreign_key "user_accounts", "users"
 end
