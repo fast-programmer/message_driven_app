@@ -35,7 +35,7 @@ module User
       user_id: user.id,
       name: sync_user_command.name,
       body: sync_user_command.body,
-      retry_limit: 3
+      retry_attempt_limit: 3
     )
 
     user.readonly!

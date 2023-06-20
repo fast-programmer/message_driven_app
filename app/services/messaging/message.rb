@@ -36,6 +36,12 @@ module Messaging
       logger
     end
 
+    def self.log_connection_pool_stats(logger:)
+      stats = ActiveRecord::Base.connection_pool.stat
+
+      logger.info "Size: #{stats[:size]}, Connections: #{stats[:connections]}, Busy: #{stats[:busy]}, Idle: #{stats[:idle]}, Waiting: #{stats[:waiting]}, CheckoutTimeout: #{stats[:checkout_timeout]}"
+    end
+
     def self.handle(
           queue_id: Models::Messaging::Queue.default_id,
           handler:,
@@ -44,51 +50,58 @@ module Messaging
           current_time: Time.current)
       logger = create_logger(STDOUT)
 
+      queue = Queue.new
+
       workers = Array.new(concurrency) do
         Thread.new do
           loop do
-            message = shift(queue_id: queue_id, logger: logger, current_time: current_time)
+            message = queue.pop
 
-            if message.nil?
-              logger.info("No messages to handle")
-              sleep poll
-              next
-            end
-
-            begin
-              handler.handle(message: message, logger: logger)
-            rescue StandardError => e
-              logger.error("Failed to handle message #{message.id}: #{e.message}")
-
-              ActiveRecord::Base.transaction do
-                message.messaging_errors.create!(
-                  attempt: message.messaging_errors.maximum(:attempt) || 1,
-                  class_name: e.class.name,
-                  message_text: e.message,
-                  backtrace: e.backtrace
-                )
-
-                max_retry_attempt = message.retries.maximum(:attempt) || 0
-
-                if max_retry_attempt < message.retry_limit
-                  next_retry_attempt = max_retry_attempt + 1
-                  logger.info("Retrying attempt #{next_retry_attempt} for scheduled for message #{message.id}.")
-
-                  next_queued_until = calculate_queued_until(next_retry_attempt)
-
-                  message.update!(status: Models::Messaging::Message::STATUS[:unhandled], queued_until: next_queued_until)
-                  message.retries.create!(attempt: next_retry_attempt)
-                else
-                  logger.error("Exceeded retry limit for message #{message.id}. Marking as failed.")
-                  message.update!(status: Models::Messaging::Message::STATUS[:failed])
-                end
-              end
-
-              next
-            end
+            handler.handle(message: message, logger: logger)
 
             message.update!(status: Models::Messaging::Message::STATUS[:handled])
+          rescue StandardError => e
+            logger.error("Failed to handle message #{message.id}: #{e.message}")
+
+            begin
+              ActiveRecord::Base.connection_pool.with_connection do
+                ActiveRecord::Base.transaction do
+                  message.messaging_errors.create!(class_name: e.class.name, message_text: e.message, backtrace: e.backtrace)
+
+                  if message.retry_attempt < message.retry_attempt_limit
+                    message.retry_attempt += 1
+                    logger.info("Retrying attempt #{message.retry_attempt} for scheduled for message #{message.id}.")
+
+                    next_queued_until = calculate_queued_until(message.retry_attempt)
+
+                    message.update!(status: Models::Messaging::Message::STATUS[:unhandled], queued_until: next_queued_until)
+                    message.retries.create!(attempt: message.retry_attempt)
+                  else
+                    logger.error("Exceeded retry limit for message #{message.id}. Marking as failed.")
+                    message.update!(status: Models::Messaging::Message::STATUS[:failed])
+                  end
+                end
+              end
+            rescue ActiveRecord::ConnectionTimeoutError
+              logger.error("Exceeded connection pool limit.")
+            end
           end
+        end
+      end
+
+      loop do
+        log_connection_pool_stats(logger: logger)
+        message = shift(queue_id: queue_id, logger: logger, current_time: current_time)
+        log_connection_pool_stats(logger: logger)
+
+        if message
+          queue.push(message)
+        else
+          logger.info('No messages to handle')
+
+          sleep poll
+
+          next
         end
       end
 

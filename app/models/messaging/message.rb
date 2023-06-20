@@ -11,6 +11,8 @@ module Models
       }.freeze
 
       attribute :status, :text, default: STATUS[:unhandled]
+      attribute :retry_attempt, :integer, default: 0
+      attribute :retry_attempt_limit, :integer, default: 0
 
       belongs_to :queue, foreign_key: 'queue_id', class_name: '::Models::Messaging::Queue'
       belongs_to :account
@@ -26,7 +28,8 @@ module Models
       validates :messageable_id, presence: true
       validates :name, presence: true
       validates :status, presence: true
-      validates :retry_limit, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+      validates :retry_attempt, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+      validates :retry_attempt_limit, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
       # validate :validate_retry_count_not_greater_than_retry_limit
       # def validate_retry_count_not_greater_than_retry_limit

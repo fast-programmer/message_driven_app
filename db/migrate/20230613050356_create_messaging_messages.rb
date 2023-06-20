@@ -13,8 +13,8 @@ class CreateMessagingMessages < ActiveRecord::Migration[6.0]
 
       t.column :queued_until, 'timestamptz'
 
-      t.integer :retry_count, null: false, default: 0
-      t.integer :retry_limit, null: false, default: 0
+      t.integer :retry_attempt, null: false
+      t.integer :retry_attempt_limit, null: false
 
       t.column :created_at, 'timestamptz', null: false
       t.column :updated_at, 'timestamptz', null: false
