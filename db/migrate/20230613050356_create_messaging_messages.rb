@@ -11,10 +11,10 @@ class CreateMessagingMessages < ActiveRecord::Migration[6.0]
       t.text :messageable_type, null: false
       t.bigint :messageable_id, null: false
 
-      t.column :queued_until, 'timestamptz'
+      t.column :queue_until, 'timestamptz'
 
-      t.integer :retry_attempt, null: false
-      t.integer :retry_attempt_limit, null: false
+      t.integer :tries_count, null: false
+      t.integer :tries_max, null: false
 
       t.column :created_at, 'timestamptz', null: false
       t.column :updated_at, 'timestamptz', null: false

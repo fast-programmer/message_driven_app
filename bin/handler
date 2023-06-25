@@ -6,5 +6,4 @@ require_relative '../config/environment'
 Messaging::Message.handle(
   handler: Handlers::Handler,
   poll: 1,
-  concurrency: 5
-)
+  concurrency: 5)

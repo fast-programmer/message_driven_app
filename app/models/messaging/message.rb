@@ -3,6 +3,19 @@ module Models
     class Message < ::ApplicationRecord
       self.table_name = 'messaging_messages'
 
+      has_many :tries, class_name: '::Models::Messaging::Message::Try', dependent: :destroy
+
+      class Try < ApplicationRecord
+        self.table_name = 'messaging_message_tries'
+
+        validates :was_successful, inclusion: { in: [true, false] }
+
+        validates :error_class_name, :error_message, :error_backtrace, presence: true, unless: :was_successful?
+        validates :error_class_name, :error_message, :error_backtrace, absence: true, if: :was_successful?
+
+        belongs_to :message, foreign_key: 'message_id', class_name: '::Models::Messaging::Message'
+      end
+
       STATUS = {
         unhandled: 'unhandled',
         handling: 'handling',
@@ -11,16 +24,13 @@ module Models
       }.freeze
 
       attribute :status, :text, default: STATUS[:unhandled]
-      attribute :retry_attempt, :integer, default: 0
-      attribute :retry_attempt_limit, :integer, default: 0
+      attribute :tries_count, :integer, default: 0
+      attribute :tries_max, :integer, default: 1
 
       belongs_to :queue, foreign_key: 'queue_id', class_name: '::Models::Messaging::Queue'
       belongs_to :account
       belongs_to :user
       belongs_to :messageable, polymorphic: true
-
-      has_many :messaging_errors, foreign_key: 'message_id', class_name: "::Models::Messaging::Error", dependent: :destroy
-      has_many :retries, class_name: '::Models::Messaging::Retry', foreign_key: 'message_id'
 
       validates :user_id, presence: true
       validates :type, presence: true
@@ -28,15 +38,16 @@ module Models
       validates :messageable_id, presence: true
       validates :name, presence: true
       validates :status, presence: true
-      validates :retry_attempt, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
-      validates :retry_attempt_limit, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
-      # validate :validate_retry_count_not_greater_than_retry_limit
-      # def validate_retry_count_not_greater_than_retry_limit
-      #   if retries.maximum(:attempt) > retry_limit
-      #     errors.add(:retries, "can't be greater than retry limit")
-      #   end
-      # end
+      validates :tries_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+      validates :tries_max, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
+
+      validate :validate_tries_count_not_greater_than_tries_max
+      def validate_tries_count_not_greater_than_tries_max
+        if tries_count > tries_max
+          errors.add(:tries_count, 'cannot be greater than tries_max')
+        end
+      end
 
       after_initialize :set_default_queue, if: :new_record?
 
