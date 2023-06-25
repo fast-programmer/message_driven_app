@@ -52,70 +52,92 @@ module Messaging
 
       queue = Queue.new
 
-      workers = Array.new(concurrency) do
+      workers = concurrency.times.map do
         Thread.new do
           loop do
             message = queue.pop
 
-            handler.handle(message: message, logger: logger)
-
-            message.update!(status: Models::Messaging::Message::STATUS[:handled])
-          rescue StandardError => e
-            logger.error("Failed to handle message #{message.id}: #{e.message}")
+            return_value = nil
+            message.tries_count += 1
+            started_at = Time.current
 
             begin
               ActiveRecord::Base.connection_pool.with_connection do
-                ActiveRecord::Base.transaction do
-                  message.messaging_errors.create!(class_name: e.class.name, message_text: e.message, backtrace: e.backtrace)
-
-                  if message.retry_attempt < message.retry_attempt_limit
-                    message.retry_attempt += 1
-                    logger.info("Retrying attempt #{message.retry_attempt} for scheduled for message #{message.id}.")
-
-                    next_queued_until = calculate_queued_until(message.retry_attempt)
-
-                    message.update!(status: Models::Messaging::Message::STATUS[:unhandled], queued_until: next_queued_until)
-                    message.retries.create!(attempt: message.retry_attempt)
-                  else
-                    logger.error("Exceeded retry limit for message #{message.id}. Marking as failed.")
-                    message.update!(status: Models::Messaging::Message::STATUS[:failed])
-                  end
-                end
+                return_value = handler.handle(message: message, logger: logger)
               end
-            rescue ActiveRecord::ConnectionTimeoutError
-              logger.error("Exceeded connection pool limit.")
+            rescue StandardError => e
+              ended_at = Time.current
+
+              if message.tries_count < message.max_tries
+                message.status = Models::Messaging::Message::STATUS[:unhandled]
+                message.queue_until = calculate_queued_until(message.tries_count)
+              else
+                message.status = Models::Messaging::Message::STATUS[:failed]
+              end
+
+              ActiveRecord::Base.transaction do
+                message.save!
+
+                message.tries.create!(
+                  index: message.tries_count, was_successful: false,
+                  started_at: started_at, ended_at: ended_at,
+                  error_class_name: e.class.name, error_message: e.message, error_backtrace: e.backtrace)
+              end
+
+              next
+            end
+
+            ended_at = Time.current
+
+            message.status = Models::Messaging::Message::STATUS[:handled]
+
+            ActiveRecord::Base.transaction do
+              message.save!
+
+              message.tries.create!(
+                index: message.tries_count, was_successful: true,
+                started_at: started_at, ended_at: ended_at,
+                return_value: return_value)
             end
           end
         end
       end
 
       loop do
-        log_connection_pool_stats(logger: logger)
-        message = shift(queue_id: queue_id, logger: logger, current_time: current_time)
-        log_connection_pool_stats(logger: logger)
-
-        if message
-          queue.push(message)
-        else
-          logger.info('No messages to handle')
+        unless queue.length < concurrency
+          logger.info('queue.length >= concurrency')
 
           sleep poll
 
           next
         end
+
+        # log_connection_pool_stats(logger: logger)
+        message = shift(queue_id: queue_id, logger: logger, current_time: current_time)
+        # log_connection_pool_stats(logger: logger)
+
+        unless message
+          logger.info('no messages to handle')
+
+          sleep poll
+
+          next
+        end
+
+        queue.push(message)
       end
 
       workers.each { |worker| worker.join }
     end
 
-    def self.calculate_queued_until(retry_count)
-      backoff_time = sidekiq_backoff(retry_count)
+    def self.calculate_queued_until(try_count)
+      backoff_time = sidekiq_backoff(try_count)
 
       Time.current + backoff_time
     end
 
-    def self.sidekiq_backoff(retry_count)
-      (retry_count ** 4) + 15 + (rand(30) * (retry_count + 1))
+    def self.sidekiq_backoff(try_count)
+      (retry_count ** 4) + 15 + (rand(30) * (try_count))
     end
 
     def self.shift(queue_id:, logger:, current_time:)

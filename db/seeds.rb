@@ -52,10 +52,12 @@ command = user.commands.create!(
   name: sync_user_command.name,
   body: sync_user_command.body,
   queue_until: Time.current + 10.seconds,
-  max_attempts: 2
+  tries_max: 1
 )
 
-command.attempts.last
+handler = command.create_handler!(max_tries: 1)
+
+command.attempts.first.error
 
 command.status => 'failed'
 last_attempt = command.attempts.last
@@ -159,3 +161,20 @@ commands.retry_count => 1
 
 #   User.sync_async(account_id: account.id, user_id: user.id, id: user.id)
 # end
+
+
+
+# message.tries_max => 3
+# message.tries_count
+# message.tries[0].was_successful?
+# message.tries[0].error
+# message.tries[0].return_value
+# message.tries[0].value
+# message.last_handler_try.return_value
+
+# SELECT * FROM messages_tries
+# LEFT JOIN
+
+
+# message.result
+# message.handler_error
