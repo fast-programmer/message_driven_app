@@ -21,7 +21,7 @@ ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 
 
 sync_user_command = Messages::User.sync
 
-10.times do |i|
+1.times do |i|
   user = Models::User.create!(email: "user#{i+1}@fastprogrammer.co")
   account = Models::Account.create!(name: "Account #{i+1}", slug: "account-#{i+1}", owner_id: user.id)
 
@@ -34,6 +34,7 @@ sync_user_command = Messages::User.sync
 
   user.commands.create!(
     user_id: user.id,
+    account_id: account.id,
     name: sync_user_command.name,
     body: sync_user_command.body,
     queue_until: Time.current + 10.seconds)

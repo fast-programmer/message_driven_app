@@ -3,19 +3,6 @@ module Models
     class Message < ::ApplicationRecord
       self.table_name = 'messaging_messages'
 
-      has_many :tries, class_name: '::Models::Messaging::Message::Try', dependent: :destroy
-
-      class Try < ApplicationRecord
-        self.table_name = 'messaging_message_tries'
-
-        validates :was_successful, inclusion: { in: [true, false] }
-
-        validates :error_class_name, :error_message, :error_backtrace, presence: true, unless: :was_successful?
-        validates :error_class_name, :error_message, :error_backtrace, absence: true, if: :was_successful?
-
-        belongs_to :message, foreign_key: 'message_id', class_name: '::Models::Messaging::Message'
-      end
-
       STATUS = {
         unhandled: 'unhandled',
         handling: 'handling',
@@ -31,6 +18,19 @@ module Models
       belongs_to :account
       belongs_to :user
       belongs_to :messageable, polymorphic: true
+
+      has_many :tries, class_name: '::Models::Messaging::Message::Try', dependent: :destroy
+
+      class Try < ApplicationRecord
+        self.table_name = 'messaging_message_tries'
+
+        validates :was_successful, inclusion: { in: [true, false] }
+
+        validates :error_class_name, :error_message, :error_backtrace, presence: true, unless: :was_successful?
+        validates :error_class_name, :error_message, :error_backtrace, absence: true, if: :was_successful?
+
+        belongs_to :message, foreign_key: 'message_id', class_name: '::Models::Messaging::Message'
+      end
 
       validates :user_id, presence: true
       validates :type, presence: true
@@ -55,10 +55,10 @@ module Models
         self.queue ||= Queue.default
       end
 
-      before_update :delete_error, if: -> { status_changed? && status_before_last_save == 'failed' && status != 'failed' }
+      before_validation :set_account_id
 
-      def delete_error
-        error&.destroy
+      def set_account_id
+        self.account_id ||= messageable.account_id if messageable.respond_to?(:account_id)
       end
 
       class Body

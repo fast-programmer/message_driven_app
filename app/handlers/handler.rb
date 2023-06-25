@@ -5,7 +5,7 @@ module Handlers
     def handle(message:, logger:)
       logger.info("message #{message.id} > handling #{message.name}")
 
-      # raise StandardError.new('fake error')
+      raise StandardError.new('fake error')
 
       ActiveCampaignIntegration::Handlers::Handler.handle(message: message, logger: logger)
       MailchimpIntegration::Handlers::Handler.handle(message: message, logger: logger)
