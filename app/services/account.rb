@@ -7,13 +7,14 @@ module Account
   class NotFound < StandardError; end
 
   def create(name:, slug:, owner_id:)
-    ActiveRecord::Base.transaction do
-      user = Models::User.find(owner_id)
+    user = Models::User.find(owner_id)
 
+    ActiveRecord::Base.transaction do
       account = Models::Account.create!(name: name, slug: slug, owner_id: owner_id, users: [user])
       account_created_event = Messages::Account.created(name: name, slug: slug, owner_id: owner_id)
 
       account.events.create!(
+        account: account,
         user: user,
         name: account_created_event.name,
         body: account_created_event.body

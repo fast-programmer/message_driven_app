@@ -6,8 +6,8 @@ module Models
     has_many :user_accounts
     has_many :accounts, through: :user_accounts
 
-    has_many :events, -> { order(created_at: :asc) }, as: :messageable, class_name: '::Models::Event'
-    has_many :commands, -> { order(created_at: :asc) }, as: :messageable, class_name: '::Models::Command'
-    has_many :messages, -> { order(created_at: :asc) }, as: :messageable, class_name: '::Models::Message'
+    has_many :events, -> { order(created_at: :asc) }, as: :messageable, class_name: '::Models::Messaging::Event'
+    has_many :commands, -> { order(created_at: :asc) }, as: :messageable, class_name: '::Models::Messaging::Command'
+    has_many :messages, -> { order(created_at: :asc) }, as: :messageable, class_name: '::Models::Messaging::Message'
   end
 end

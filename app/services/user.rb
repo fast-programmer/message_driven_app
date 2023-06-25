@@ -1,10 +1,8 @@
-require_relative '../messages/user'
-
 module User
   module_function
 
   class Error < StandardError; end
-  class NotFound < StandardError; end
+  class NotFound < Error; end
 
   def create(email:, current_time: Time.current)
     ActiveRecord::Base.transaction do
@@ -30,12 +28,13 @@ module User
 
   def sync_async(account_id:, user_id:, id:)
     user = Models::Account.find(account_id).users.find(id)
-    sync_user_command = Messages::User.sync
+    sync_user_message = Messages::User.sync
 
     user.commands.create!(
       user_id: user.id,
-      name: sync_user_command.name,
-      body: sync_user_command.body
+      name: sync_user_message.name,
+      body: sync_user_message.body,
+      max_attempts: 2
     )
 
     user.readonly!
@@ -48,11 +47,12 @@ module User
     raise Error.new(e.record.errors.full_messages.to_sentence)
   end
 
-  def sync(user_id:, id:, current_time: Time.current)
+  def sync(account_id:, user_id:, id:, current_time: Time.current)
     user = Models::User.find(id)
     synced_user_event = Messages::User.synced
 
     user.events.create!(
+      account_id: account_id,
       user_id: user_id,
       name: synced_user_event.name,
       body: synced_user_event.body
