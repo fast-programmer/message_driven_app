@@ -74,39 +74,19 @@ module Messaging
       end
     end
 
-    # def self.handle_message(message, logger, handler)
-    #   started_at = Time.current
-    #   return_value = nil
-
-    #   begin
-    #     ActiveRecord::Base.connection_pool.with_connection do
-    #       return_value = handler.handle(message: message, logger: logger)
-    #     end
-    #   rescue StandardError => e
-    #     return failed(e, message, started_at, Time.current)
-    #   end
-
-    #   handled(message, started_at, Time.current, return_value)
-    # end
-
     def self.handle_message(message, logger, handler)
-      started_at = Time.current
       return_value = nil
+      started_at = Time.current
 
-      begin
-        ActiveRecord::Base.connection_pool.with_connection do
-          begin
-            return_value = handler.handle(message: message, logger: logger)
-          rescue StandardError => e
-            return failed(e, message, started_at, Time.current)
-          end
+      ActiveRecord::Base.connection_pool.with_connection do
+        begin
+          return_value = handler.handle(message: message, logger: logger)
+        rescue StandardError => e
+          return failed(e, message, started_at, Time.current)
         end
-      rescue ActiveRecord::ConnectionTimeoutError => e
-        logger.warn("Failed to acquire a connection > #{e.message}")
-        return
-      end
 
-      handled(message, started_at, Time.current, return_value)
+        handled(message, started_at, Time.current, return_value)
+      end
     end
 
     def self.handled(message, started_at, ended_at, return_value)
@@ -184,24 +164,22 @@ module Messaging
     end
 
     def self.shift(queue_id:, logger:, current_time:)
-      ActiveRecord::Base.transaction do
-        message = Models::Messaging::Message
-                    .where(queue_id: queue_id)
-                    .where(status: Models::Messaging::Message::STATUS[:unhandled])
-                    .where('queue_until IS NULL OR queue_until < ?', current_time)
-                    .order(created_at: :asc)
-                    .limit(1)
-                    .lock('FOR UPDATE SKIP LOCKED')
-                    .first
+      ActiveRecord::Base.connection_pool.with_connection do
+        ActiveRecord::Base.transaction do
+          message = Models::Messaging::Message
+                      .where(queue_id: queue_id)
+                      .where(status: Models::Messaging::Message::STATUS[:unhandled])
+                      .where('queue_until IS NULL OR queue_until < ?', current_time)
+                      .order(created_at: :asc)
+                      .limit(1)
+                      .lock('FOR UPDATE SKIP LOCKED')
+                      .first
 
-        message&.update!(status: Models::Messaging::Message::STATUS[:handling])
+          message&.update!(status: Models::Messaging::Message::STATUS[:handling])
 
-        message
+          message
+        end
       end
-    rescue ActiveRecord::ConnectionTimeoutError => e
-      logger.warn("failed to find message in time > #{e.message}")
-
-      nil
     end
 
     private_class_method :shift

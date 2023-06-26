@@ -22,7 +22,7 @@ ActiveRecord::Base.connection.execute("SELECT setval('messaging_message_tries_id
 ActiveRecord::Base.connection.execute("SELECT setval('messaging_messages_id_seq', 1, false)")
 ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 1, false)")
 
-1.times do |i|
+10.times do |i|
   user = Models::User.create!(email: "user#{i+1}@fastprogrammer.co")
   user.messages << Messages::User.created(user_id: user.id, email: user.email)
 
