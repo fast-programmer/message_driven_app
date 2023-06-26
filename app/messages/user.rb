@@ -2,32 +2,24 @@ module Messages
   module User
     module_function
 
-    def created(email:)
-      OpenStruct.new(
-        {
-          body: { email: email }
-        }.merge(name: build_name(__method__))
-      )
+    def created(user_id:, email:)
+      Models::Messaging::Command.new(
+        name: 'User.created',
+        user_id: user_id,
+        body: { email: email })
     end
 
-    def sync
-      OpenStruct.new(
-        {
-          body: nil,
-        }.merge(name: build_name(__method__))
-      )
+    def sync(account_id:, user_id:, tries_max: 1, queue_until: nil)
+      Models::Messaging::Command.new(
+        name: 'User.sync',
+        account_id: account_id,
+        user_id: user_id,
+        queue_until: queue_until,
+        tries_max: tries_max)
     end
 
     def synced
-      OpenStruct.new(
-        {
-          body: nil,
-        }.merge(name: build_name(__method__))
-      )
-    end
-
-    def build_name(method_name)
-      name + '.' + method_name.to_s
+      Models::Messaging::Event.new(name: 'User.sync')
     end
   end
 end
