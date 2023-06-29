@@ -1,46 +1,12 @@
-require 'logger'
-require 'colorize'
-
 module Messaging
   Signal.trap('INT') do
-
     Message.shutdown
 
     exit
   end
 
   module Message
-    @is_running = true
-
-    def self.shutdown
-      @is_running = false
-    end
-
-    def self.create_logger(output)
-      color_scheme = {
-        'DEBUG' => :cyan,
-        'INFO' => :white,
-        'WARN' => :yellow,
-        'ERROR' => :red,
-        'FATAL' => :red
-      }
-      thread_ids = Hash.new { |h, k| h[k] = h.size }
-
-      logger = Logger.new(output)
-      logger.formatter = proc do |severity, datetime, progname, msg|
-        thread_id = thread_ids[Thread.current.object_id]
-        color = color_scheme[severity] || :white
-        "#{datetime.utc.iso8601(3)} TID-#{thread_id.to_s.rjust(3, '0')} #{progname}: [#{severity.downcase}]: #{msg}\n".colorize(color)
-      end
-
-      logger
-    end
-
-    def self.log_connection_pool_stats(logger:)
-      stats = ActiveRecord::Base.connection_pool.stat
-
-      logger.info "Size: #{stats[:size]}, Connections: #{stats[:connections]}, Busy: #{stats[:busy]}, Idle: #{stats[:idle]}, Waiting: #{stats[:waiting]}, CheckoutTimeout: #{stats[:checkout_timeout]}"
-    end
+    @is_handling = false
 
     def self.handle(
       queue_id: Models::Messaging::Queue.default_id,
@@ -48,13 +14,19 @@ module Messaging
       poll:,
       concurrency:
     )
-      logger = create_logger(STDOUT)
+      logger = Logger.create
       queue = Queue.new
 
-      workers = create_workers(concurrency, queue, logger, handler)
-      loop_shift_message(queue, logger, queue_id, concurrency, poll)
+      @is_handling = true
 
-      workers.each { |worker| worker.join }
+      workers = create_workers(concurrency, queue, logger, handler)
+      loop_dequeue_message(queue, logger, queue_id, concurrency, poll)
+
+      workers.each(&:join)
+    end
+
+    def self.shutdown
+      @is_handling = false
     end
 
     private
@@ -62,14 +34,42 @@ module Messaging
     def self.create_workers(concurrency, queue, logger, handler)
       concurrency.times.map do
         Thread.new do
+          Thread.current.abort_on_exception = true
+
           worker_loop(queue, logger, handler)
         end
       end
     end
 
+    def self.loop_dequeue_message(queue, logger, queue_id, concurrency, poll)
+      while @is_handling
+        unless queue.length < concurrency
+          logger.info('queue.length >= concurrency')
+
+          sleep poll
+
+          next
+        end
+
+        message = dequeue(queue_id: queue_id, logger: logger, current_time: Time.current)
+
+        unless message
+          logger.info('no messages to handle')
+
+          sleep poll
+
+          next
+        end
+
+        queue.push(message)
+      end
+    end
+
+
     def self.worker_loop(queue, logger, handler)
-      loop do
+      while @is_handling
         message = queue.pop
+
         handle_message(message, logger, handler)
       end
     end
@@ -82,6 +82,9 @@ module Messaging
         begin
           return_value = handler.handle(message: message, logger: logger)
         rescue StandardError => e
+          logger.error("Exception occurred: #{e.class}: #{e.message}")
+          logger.error(e.backtrace.join("\n"))
+
           return failed(e, message, started_at, Time.current)
         end
 
@@ -127,32 +130,6 @@ module Messaging
       message
     end
 
-    def self.loop_shift_message(queue, logger, queue_id, concurrency, poll)
-      loop do
-        unless queue.length < concurrency
-          logger.info('queue.length >= concurrency')
-
-          sleep poll
-
-          next
-        end
-
-        message = shift(queue_id: queue_id, logger: logger, current_time: Time.current)
-
-        unless message
-          logger.info('no messages to handle')
-
-          sleep poll
-
-          next
-        end
-
-        queue.push(message)
-      end
-
-      workers.each { |worker| worker.join }
-    end
-
     def self.calculate_queue_until(try_count)
       backoff_time = sidekiq_backoff(try_count)
 
@@ -163,7 +140,7 @@ module Messaging
       (try_count ** 4) + 15 + (rand(30) * (try_count))
     end
 
-    def self.shift(queue_id:, logger:, current_time:)
+    def self.dequeue(queue_id:, logger:, current_time:)
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
           message = Models::Messaging::Message
@@ -181,7 +158,5 @@ module Messaging
         end
       end
     end
-
-    private_class_method :shift
   end
 end

@@ -21,6 +21,7 @@ require_relative '../app/messages/account'
 
 require_relative '../app/services/user'
 require_relative '../app/services/account'
+require_relative '../app/services/messaging/logger'
 require_relative '../app/services/messaging/message'
 
 require_relative '../subdomains/active_campaign_integration'
