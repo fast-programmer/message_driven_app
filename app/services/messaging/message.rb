@@ -9,10 +9,10 @@ module Messaging
     @is_handling = false
 
     def self.handle(
-      queue_id: Models::Messaging::Queue.default_id,
       handler:,
       poll:,
-      concurrency:
+      concurrency:,
+      queue_id: Models::Messaging::Queue.default_id
     )
       logger = Logger.create
       queue = Queue.new
@@ -28,8 +28,6 @@ module Messaging
     def self.shutdown
       @is_handling = false
     end
-
-    private
 
     def self.create_workers(concurrency, queue, logger, handler)
       concurrency.times.map do
@@ -51,7 +49,7 @@ module Messaging
           next
         end
 
-        message = dequeue(queue_id: queue_id, logger: logger, current_time: Time.current)
+        message = dequeue(queue_id: queue_id, current_time: Time.current)
 
         unless message
           logger.info('no messages to handle')
@@ -65,50 +63,76 @@ module Messaging
       end
     end
 
-
     def self.worker_loop(queue, logger, handler)
       while @is_handling
         message = queue.pop
 
-        handle_message(message, logger, handler)
+        handle_message(message: message, handler: handler, logger: logger)
       end
     end
 
-    def self.handle_message(message, logger, handler)
+    def self.handle_message(message:, logger:, handler:)
+      was_successful = nil
+      started_at = nil
+      ended_at = nil
       return_value = nil
-      started_at = Time.current
+      error = nil
 
-      ActiveRecord::Base.connection_pool.with_connection do
-        begin
+      begin
+        started_at = Time.current
+
+        ActiveRecord::Base.connection_pool.with_connection do
           return_value = handler.handle(message: message, logger: logger)
-        rescue StandardError => e
-          logger.error("Exception occurred: #{e.class}: #{e.message}")
-          logger.error(e.backtrace.join("\n"))
-
-          return failed(e, message, started_at, Time.current)
         end
 
-        handled(message, started_at, Time.current, return_value)
+        ended_at = Time.current
+
+        was_successful = true
+      rescue StandardError => error
+        ended_at = Time.current
+
+        was_successful = false
+
+        logger.error("Exception occurred: #{error.class}: #{error.message}")
+        logger.error(error.backtrace.join("\n"))
+      end
+
+      if was_successful
+        handled(
+          message: message,
+          started_at: started_at,
+          ended_at: ended_at,
+          return_value: return_value)
+      else
+        failed(
+          message: message,
+          started_at: started_at,
+          ended_at: ended_at,
+          error: error)
       end
     end
 
-    def self.handled(message, started_at, ended_at, return_value)
+    def self.handled(message:, started_at:, ended_at:, return_value:)
       message.tries_count += 1
       message.status = Models::Messaging::Message::STATUS[:handled]
 
-      ActiveRecord::Base.transaction do
-        message.save!
+      ActiveRecord::Base.connection_pool.with_connection do
+        ActiveRecord::Base.transaction do
+          message.save!
 
-        message.tries.create!(
-          index: message.tries_count, was_successful: true,
-          started_at: started_at, ended_at: ended_at,
-          return_value: return_value)
+          message.tries.create!(
+            index: message.tries_count,
+            was_successful: true,
+            started_at: started_at,
+            ended_at: ended_at,
+            return_value: return_value)
+        end
       end
 
       message
     end
 
-    def self.failed(e, message, started_at, ended_at)
+    def self.failed(message:, started_at:, ended_at:, error:)
       message.tries_count += 1
 
       if message.tries_count < message.tries_max
@@ -118,13 +142,19 @@ module Messaging
         message.status = Models::Messaging::Message::STATUS[:failed]
       end
 
-      ActiveRecord::Base.transaction do
-        message.save!
+      ActiveRecord::Base.connection_pool.with_connection do
+        ActiveRecord::Base.transaction do
+          message.save!
 
-        message.tries.create!(
-          index: message.tries_count, was_successful: false,
-          started_at: started_at, ended_at: ended_at,
-          error_class_name: e.class.name, error_message: e.message, error_backtrace: e.backtrace)
+          message.tries.create!(
+            index: message.tries_count,
+            was_successful: false,
+            started_at: started_at,
+            ended_at: ended_at,
+            error_class_name: error.class.name,
+            error_message: error.message,
+            error_backtrace: error.backtrace)
+        end
       end
 
       message
@@ -140,7 +170,7 @@ module Messaging
       (try_count ** 4) + 15 + (rand(30) * (try_count))
     end
 
-    def self.dequeue(queue_id:, logger:, current_time:)
+    def self.dequeue(queue_id:, current_time:)
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
           message = Models::Messaging::Message
