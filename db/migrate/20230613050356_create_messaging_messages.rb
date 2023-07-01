@@ -4,17 +4,17 @@ class CreateMessagingMessages < ActiveRecord::Migration[6.0]
       t.bigint :queue_id, null: false
       t.bigint :account_id
       t.bigint :user_id, null: false
-      t.text :name, null: false
       t.text :type, null: false
-      t.jsonb :body
+      t.text :body_class_name, null: false
+      t.jsonb :body_json
       t.text :status, null: false
       t.text :messageable_type, null: false
       t.bigint :messageable_id, null: false
 
       t.column :queue_until, 'timestamptz'
 
-      t.integer :tries_count, null: false
-      t.integer :tries_max, null: false
+      t.integer :attempts_count, null: false
+      t.integer :attempts_max, null: false
 
       t.column :created_at, 'timestamptz', null: false
       t.column :updated_at, 'timestamptz', null: false

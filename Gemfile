@@ -10,6 +10,7 @@ gem 'jbuilder', '~> 2.7'
 gem 'sass-rails', '>= 6'
 gem 'colorize'
 gem 'concurrent-ruby'
+gem 'google-protobuf', '~> 3.23', '>= 3.23.3'
 
 gem 'bootsnap', '>= 1.4.2', require: false
 

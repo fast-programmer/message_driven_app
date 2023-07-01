@@ -1,0 +1,35 @@
+/* messaging/messages.css */
+
+.preview {
+    margin-bottom: 10px;
+}
+
+.details {
+    margin-top: 10px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.message {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.message .header {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.message .body {
+    margin-bottom: 10px;
+}
+
+.message .meta {
+    color: #888;
+}

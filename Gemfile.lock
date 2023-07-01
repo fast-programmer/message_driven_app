@@ -71,6 +71,7 @@ GEM
     ffi (1.15.5)
     globalid (1.1.0)
       activesupport (>= 5.0)
+    google-protobuf (3.23.3)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
     jbuilder (2.11.5)
@@ -202,6 +203,7 @@ DEPENDENCIES
   byebug
   colorize
   concurrent-ruby
+  google-protobuf (~> 3.23, >= 3.23.3)
   jbuilder (~> 2.7)
   listen (~> 3.2)
   pg (>= 0.18, < 2.0)

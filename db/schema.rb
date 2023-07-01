@@ -23,32 +23,32 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
     t.index ["owner_id"], name: "index_accounts_on_owner_id"
   end
 
-  create_table "messaging_message_tries", force: :cascade do |t|
+  create_table "messaging_message_attempts", force: :cascade do |t|
     t.bigint "message_id", null: false
     t.integer "index", null: false
     t.datetime "started_at", null: false
     t.datetime "ended_at", null: false
-    t.boolean "was_successful", null: false
+    t.boolean "successful", null: false
     t.jsonb "return_value"
     t.text "error_class_name"
     t.text "error_message"
     t.text "error_backtrace", array: true
-    t.index ["message_id"], name: "index_messaging_message_tries_on_message_id"
+    t.index ["message_id"], name: "index_messaging_message_attempts_on_message_id"
   end
 
   create_table "messaging_messages", force: :cascade do |t|
     t.bigint "queue_id", null: false
     t.bigint "account_id"
     t.bigint "user_id", null: false
-    t.text "name", null: false
     t.text "type", null: false
-    t.jsonb "body"
+    t.text "body_class_name", null: false
+    t.jsonb "body_json"
     t.text "status", null: false
     t.text "messageable_type", null: false
     t.bigint "messageable_id", null: false
     t.datetime "queue_until"
-    t.integer "tries_count", null: false
-    t.integer "tries_max", null: false
+    t.integer "attempts_count", null: false
+    t.integer "attempts_max", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["messageable_type", "messageable_id"], name: "index_messaging_messages_on_messageable_type_and_messageable_id"
@@ -79,7 +79,7 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
   end
 
   add_foreign_key "accounts", "users", column: "owner_id"
-  add_foreign_key "messaging_message_tries", "messaging_messages", column: "message_id"
+  add_foreign_key "messaging_message_attempts", "messaging_messages", column: "message_id"
   add_foreign_key "messaging_messages", "accounts"
   add_foreign_key "messaging_messages", "messaging_queues", column: "queue_id"
   add_foreign_key "messaging_messages", "users"

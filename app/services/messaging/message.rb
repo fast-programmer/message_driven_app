@@ -12,9 +12,9 @@ module Messaging
       handler:,
       poll:,
       concurrency:,
-      queue_id: Models::Messaging::Queue.default_id
+      queue_id: Models::Messaging::Queue.default_id,
+      logger: Logger.create
     )
-      logger = Logger.create
       queue = Queue.new
 
       @is_handling = true
@@ -72,7 +72,7 @@ module Messaging
     end
 
     def self.handle_message(message:, logger:, handler:)
-      was_successful = nil
+      successful = nil
       started_at = nil
       ended_at = nil
       return_value = nil
@@ -87,17 +87,17 @@ module Messaging
 
         ended_at = Time.current
 
-        was_successful = true
+        successful = true
       rescue StandardError => error
         ended_at = Time.current
 
-        was_successful = false
+        successful = false
 
         logger.error("Exception occurred: #{error.class}: #{error.message}")
         logger.error(error.backtrace.join("\n"))
       end
 
-      if was_successful
+      if successful
         handled(
           message: message,
           started_at: started_at,
@@ -113,16 +113,16 @@ module Messaging
     end
 
     def self.handled(message:, started_at:, ended_at:, return_value:)
-      message.tries_count += 1
+      message.attempts_count += 1
       message.status = Models::Messaging::Message::STATUS[:handled]
 
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
           message.save!
 
-          message.tries.create!(
-            index: message.tries_count,
-            was_successful: true,
+          message.attempts.create!(
+            index: message.attempts_count,
+            successful: true,
             started_at: started_at,
             ended_at: ended_at,
             return_value: return_value)
@@ -133,11 +133,11 @@ module Messaging
     end
 
     def self.failed(message:, started_at:, ended_at:, error:)
-      message.tries_count += 1
+      message.attempts_count += 1
 
-      if message.tries_count < message.tries_max
+      if message.attempts_count < message.attempts_max
         message.status = Models::Messaging::Message::STATUS[:unhandled]
-        message.queue_until = calculate_queue_until(message.tries_count)
+        message.queue_until = calculate_queue_until(message.attempts_count)
       else
         message.status = Models::Messaging::Message::STATUS[:failed]
       end
@@ -146,9 +146,9 @@ module Messaging
         ActiveRecord::Base.transaction do
           message.save!
 
-          message.tries.create!(
-            index: message.tries_count,
-            was_successful: false,
+          message.attempts.create!(
+            index: message.attempts_count,
+            successful: false,
             started_at: started_at,
             ended_at: ended_at,
             error_class_name: error.class.name,
@@ -160,14 +160,14 @@ module Messaging
       message
     end
 
-    def self.calculate_queue_until(try_count)
-      backoff_time = sidekiq_backoff(try_count)
+    def self.calculate_queue_until(attempt_count)
+      backoff_time = sidekiq_backoff(attempt_count)
 
       Time.current + backoff_time
     end
 
-    def self.sidekiq_backoff(try_count)
-      (try_count ** 4) + 15 + (rand(30) * (try_count))
+    def self.sidekiq_backoff(attempt_count)
+      (attempt_count ** 4) + 15 + (rand(30) * (attempt_count))
     end
 
     def self.dequeue(queue_id:, current_time:)

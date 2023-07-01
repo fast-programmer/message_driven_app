@@ -1,0 +1,47 @@
+<%= stylesheet_link_tag 'messaging/application', media: 'all' %>
+
+<div class="container">
+    <h1>Queues</h1>
+
+    <% queues.each do |queue| %>
+        <div class="queue">
+            <%= queue.name %>
+        </div>
+    <% end %>
+
+    <h1>Statuses</h1>
+
+    <% statuses.each do |key, value| %>
+        <div class="status">
+            <%= link_to "#{value} (#{status_counts[key] || 0})", messaging_messages_path(status: key) %>
+        </div>
+    <% end %>
+
+    <h1>Messages</h1>
+
+    <% messages.each do |message| %>
+        <div class="message">
+            <div class="header"><%= message.name %></div>
+            <div class="body">
+                <div class="preview">
+                    <% json_data = message.read_attribute(:body) %>
+                    <% if json_data.is_a?(Hash) %>
+                        <%= JSON.pretty_generate(json_data, indent: '    ').html_safe %>
+                    <% else %>
+                        Invalid JSON data
+                    <% end %>
+                </div>
+                <div class="details">
+                    <span>Status: <%= message.status %></span>
+                    <span>Queue: <%= message.queue.name %></span>
+                    <% if message.messageable.is_a?(User) %>
+                        <span>User: <%= message.messageable.name %></span>
+                    <% elsif message.messageable.is_a?(Account) %>
+                        <span>Account: <%= message.messageable.name %></span>
+                    <% end %>
+                    <span>Attempts: <%= message.attempts_count %>/<%= message.attempts_max %></span>
+                </div>
+            </div>
+        </div>
+    <% end %>
+</div>

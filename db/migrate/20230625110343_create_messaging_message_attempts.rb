@@ -1,13 +1,13 @@
-class CreateMessagingMessageTries < ActiveRecord::Migration[6.0]
+class CreateMessagingMessageAttempts < ActiveRecord::Migration[6.0]
   def change
-    create_table :messaging_message_tries do |t|
+    create_table :messaging_message_attempts do |t|
       t.references :message, null: false, foreign_key: { to_table: :messaging_messages }
       t.integer :index, null: false
 
       t.column :started_at, 'timestamptz', null: false
       t.column :ended_at, 'timestamptz', null: false
 
-      t.boolean :was_successful, null: false
+      t.boolean :successful, null: false
 
       t.jsonb :return_value
 

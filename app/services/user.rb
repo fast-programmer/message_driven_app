@@ -19,14 +19,18 @@ module User
 
   def sync_async(account_id:, user_id:, id:)
     user = Models::Account.find(account_id).users.find(id)
-    user.messages << Models::Message::User.sync
+    # sync_user_message = Messages::User.sync(attempts_max: 2)
 
-    user.commands.create!(
+    # user.commands.create!(
+    #   user_id: user.id,
+    #   name: sync_user_message.name,
+    #   body: sync_user_message.body,
+    #   attempts_max: 2)
+
+    user.messages.create!(
       user_id: user.id,
-      name: sync_user_message.name,
-      body: sync_user_message.body,
-      max_attempts: 2
-    )
+      body: Messages::User.sync,
+      attempts_max: 2)
 
     user.readonly!
     user.freeze
@@ -67,10 +71,8 @@ module User
       account_id: account_id,
       user_id: user_id,
       name: synced_user_event.name,
-      body: synced_user_event.body
-    )
+      body: synced_user_event.body)
 
-    user.readonly!
     user.freeze
 
     user

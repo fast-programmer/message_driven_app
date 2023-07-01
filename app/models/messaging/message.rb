@@ -11,18 +11,18 @@ module Models
       }.freeze
 
       attribute :status, :text, default: STATUS[:unhandled]
-      attribute :tries_count, :integer, default: 0
-      attribute :tries_max, :integer, default: 1
+      attribute :attempts_count, :integer, default: 0
+      attribute :attempts_max, :integer, default: 1
 
       belongs_to :queue, foreign_key: 'queue_id', class_name: '::Models::Messaging::Queue'
       belongs_to :account
       belongs_to :user
       belongs_to :messageable, polymorphic: true
 
-      has_many :tries, class_name: '::Models::Messaging::Message::Try', dependent: :destroy
+      has_many :attempts, class_name: '::Models::Messaging::Message::Attempt', dependent: :destroy
 
-      class Try < ApplicationRecord
-        self.table_name = 'messaging_message_tries'
+      class Attempt < ApplicationRecord
+        self.table_name = 'messaging_message_attempts'
 
         validates :was_successful, inclusion: { in: [true, false] }
 
@@ -39,13 +39,13 @@ module Models
       validates :name, presence: true
       validates :status, presence: true
 
-      validates :tries_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
-      validates :tries_max, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
+      validates :attempts_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+      validates :attempts_max, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
 
-      validate :validate_tries_count_not_greater_than_tries_max
-      def validate_tries_count_not_greater_than_tries_max
-        if tries_count > tries_max
-          errors.add(:tries_count, 'cannot be greater than tries_max')
+      validate :validate_attempts_count_not_greater_than_attempts_max
+      def validate_attempts_count_not_greater_than_attempts_max
+        if attempts_count > attempts_max
+          errors.add(:attempts_count, 'cannot be greater than attempts_max')
         end
       end
 
@@ -61,34 +61,13 @@ module Models
         self.account_id ||= messageable.account_id if messageable.respond_to?(:account_id)
       end
 
-      class Body
-        def initialize(hash)
-          @hash = hash
-        end
-
-        def method_missing(name, *args, &block)
-          if name[-1] == "="
-            @hash[name[0...-1]] = args[0]
-          else
-            @hash[name.to_s]
-          end
-        end
-
-        def to_h
-          @hash
-        end
+      def body=(body)
+        self.body_class_name = body.class.name
+        self.body_json = body.class.encode(new_body)
       end
 
       def body
-        Body.new(super)
-      end
-
-      def body=(new_body)
-        if new_body.is_a?(Body)
-          super(new_body.to_h)
-        else
-          super(new_body)
-        end
+        body_class_name.constantize.decode(body_json)
       end
     end
   end
