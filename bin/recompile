@@ -1,0 +1,5 @@
+#!/bin/bash
+
+find ./app/messages/ -name "*_pb.rb" -type f -delete
+
+protoc -I definitions/ --ruby_out=app/messages definitions/*

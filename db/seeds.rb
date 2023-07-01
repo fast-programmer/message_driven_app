@@ -24,11 +24,13 @@ ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 
 
 10.times do |i|
   ActiveRecord::Base.transaction do
-    user = Models::User.create!(email: "user#{i+1}@fastprogrammer.co")
+    user = Models::User.create!(
+      email: "user#{i+1}@fastprogrammer.co")
 
     user.events.create!(
       user_id: user.id,
-      body: Messages::User::Created.new(email: user.email))
+      body: Messages::User::Created.new(
+        email: user.email))
 
     account = Models::Account.create!(
       name: "Account #{i+1}", slug: "account-#{i+1}", owner_id: user.id)
