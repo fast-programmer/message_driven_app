@@ -18,8 +18,8 @@ require_relative '../subdomains/iam/models/user'
 require_relative '../subdomains/iam/models/account'
 require_relative '../subdomains/iam/models/user_account'
 
-require_relative '../app/messages/iam/user_pb'
-require_relative '../app/messages/iam/account_pb'
+require_relative '../subdomains/iam/messages/user_pb'
+require_relative '../subdomains/iam/messages/account_pb'
 
 require_relative '../subdomains/iam/services/user'
 

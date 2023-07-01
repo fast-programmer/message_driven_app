@@ -1,5 +1,5 @@
-module Models
-  module IAM
+module IAM
+  module Models
     class User < ::ApplicationRecord
       self.table_name = 'iam_users'
 

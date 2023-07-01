@@ -1,7 +1,7 @@
 #!/bin/bash
 
-mkdir -p app/messages
+mkdir -p subdomains/iam/messages
 
-find ./app/messages/ -name "*_pb.rb" -type f -delete
+find ./subdomains/iam/messages/ -name "*_pb.rb" -type f -delete
 
-protoc -I definitions/iam --ruby_out=app/messages/iam definitions/iam/*
+protoc -I subdomains/iam/definitions --ruby_out=subdomains/iam/messages subdomains/iam/definitions/*

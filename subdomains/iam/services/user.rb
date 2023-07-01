@@ -10,19 +10,19 @@ module IAM
       event = nil
 
       ActiveRecord::Base.transaction do
-        user = Models::IAM::User.create!(email: email)
+        user = Models::User.create!(email: email)
 
-        account = Models::IAM::Account.create!(
+        account = Models::Account.create!(
           name: "Account #{user.id}",
           slug: "account-#{user.id}",
           owner_id: user.id)
 
-        Models::IAM::UserAccount.create!(user_id: user.id, account_id: account.id)
+        Models::UserAccount.create!(user_id: user.id, account_id: account.id)
 
         event = user.events.create!(
           account_id: account.id,
           user_id: user.id,
-          body: Messages::IAM::User::Created.new(
+          body: Messages::User::Created.new(
             email: user.email))
       end
 
@@ -36,12 +36,12 @@ module IAM
     def sync_async(account_id:, user_id:,
                    id:,
                    queue_until: nil, attempts_max: 1)
-      user = Models::IAM::Account.find(account_id).users.find(id)
+      user = Models::Account.find(account_id).users.find(id)
 
       command = user.commands.create!(
         account_id: account_id,
         user_id: user_id,
-        body: Messages::IAM::User::Sync.new(
+        body: Messages::User::Sync.new(
           user: { id: id }),
         attempts_max: attempts_max,
         queue_until: queue_until)
@@ -55,12 +55,12 @@ module IAM
 
     def sync(account_id:, user_id:,
              id:)
-      user = Models::IAM::Account.find(account_id).users.find(id)
+      user = Models::Account.find(account_id).users.find(id)
 
       event = user.events.create!(
         account_id: account_id,
         user_id: user_id,
-        body: Messages::IAM::User::Synced.new(
+        body: Messages::User::Synced.new(
           user: { id: id }))
 
       [user.tap(&:readonly!), event.tap(&:readonly!)]
