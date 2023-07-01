@@ -5,7 +5,7 @@ module MailchimpIntegration
 
       def handle(message:, logger:)
         case message.body_class_name
-        when 'Messages::IAM::User::Created'
+        when 'IAM::Messages::User::Created'
           sleep(0.2)
         end
       end
