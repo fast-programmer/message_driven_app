@@ -24,10 +24,10 @@ module Models
       class Attempt < ApplicationRecord
         self.table_name = 'messaging_message_attempts'
 
-        validates :was_successful, inclusion: { in: [true, false] }
+        validates :successful, inclusion: { in: [true, false] }
 
-        validates :error_class_name, :error_message, :error_backtrace, presence: true, unless: :was_successful?
-        validates :error_class_name, :error_message, :error_backtrace, absence: true, if: :was_successful?
+        validates :error_class_name, :error_message, :error_backtrace, presence: true, unless: :successful?
+        validates :error_class_name, :error_message, :error_backtrace, absence: true, if: :successful?
 
         belongs_to :message, foreign_key: 'message_id', class_name: '::Models::Messaging::Message'
       end
@@ -37,7 +37,7 @@ module Models
       validates :messageable_type, presence: true
       validates :messageable_id, presence: true
       validates :body_class_name, presence: true
-      validates :body_json, presence: true
+      validates :body_json, presence: true, unless: -> { body_json == {} }
       validates :status, presence: true
 
       validates :attempts_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
@@ -68,7 +68,7 @@ module Models
       end
 
       def body
-        body_class_name.constantize.new(body_json)
+        body_class_name.constantize.decode_json(body_json.to_json)
       end
     end
   end

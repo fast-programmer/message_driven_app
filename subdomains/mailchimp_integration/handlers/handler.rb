@@ -6,8 +6,8 @@ module MailchimpIntegration
       extend self
 
       def handle(message:, logger:)
-        case message.name
-        when 'Messages::User.created'
+        case message.body.class
+        when Messages::User::Created
           User.created(message: message, logger: logger)
         end
       end
