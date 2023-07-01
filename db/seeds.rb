@@ -22,37 +22,13 @@ ActiveRecord::Base.connection.execute("SELECT setval('messaging_message_attempts
 ActiveRecord::Base.connection.execute("SELECT setval('messaging_messages_id_seq', 1, false)")
 ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 1, false)")
 
-10.times do |i|
-  ActiveRecord::Base.transaction do
-    user = Models::User.create!(
-      email: "user#{i+1}@fastprogrammer.co")
+1.times do |i|
+  user, event = User.create(email: "user#{i+1}@fastprogrammer.co")
 
-    user.events.create!(
-      user_id: user.id,
-      body: Messages::User::Created.new(
-        email: user.email))
-
-    account = Models::Account.create!(
-      name: "Account #{i+1}", slug: "account-#{i+1}", owner_id: user.id)
-
-    account.events.create!(
-      account_id: account.id,
-      user_id: user.id,
-      body: Messages::Account::Created.new(
-        name: account.name,
-        slug: account.slug,
-        owner_id: account.owner_id))
-
-    user.commands.create!(
-      account_id: account.id,
-      user_id: user.id,
-      body: Messages::User::Sync.new,
-      attempts_max: 2)
-
-    user.commands.create!(
-      account_id: account.id,
-      user_id: user.id,
-      body: Messages::User::Sync.new,
-      queue_until: Time.current + 10.seconds)
-  end
+  user, command = User.sync_async(
+    account_id: event.account_id,
+    user_id: user.id,
+    id: user.id,
+    queue_until: Time.current + 1.seconds,
+    attempts_max: 2)
 end

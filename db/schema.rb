@@ -38,17 +38,17 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
 
   create_table "messaging_messages", force: :cascade do |t|
     t.bigint "queue_id", null: false
-    t.bigint "account_id"
+    t.bigint "account_id", null: false
     t.bigint "user_id", null: false
-    t.text "type", null: false
-    t.text "body_class_name", null: false
-    t.jsonb "body_json", null: false
     t.text "status", null: false
-    t.text "messageable_type", null: false
-    t.bigint "messageable_id", null: false
     t.datetime "queue_until"
     t.integer "attempts_count", null: false
     t.integer "attempts_max", null: false
+    t.text "type", null: false
+    t.text "body_class_name", null: false
+    t.jsonb "body_json", null: false
+    t.text "messageable_type", null: false
+    t.bigint "messageable_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["messageable_type", "messageable_id"], name: "index_messaging_messages_on_messageable_type_and_messageable_id"

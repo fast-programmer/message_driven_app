@@ -32,6 +32,7 @@ module Models
         belongs_to :message, foreign_key: 'message_id', class_name: '::Models::Messaging::Message'
       end
 
+      validates :account_id, presence: true
       validates :user_id, presence: true
       validates :type, presence: true
       validates :messageable_type, presence: true

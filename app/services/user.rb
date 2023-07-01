@@ -4,78 +4,63 @@ module User
   class Error < StandardError; end
   class NotFound < Error; end
 
-  def create(email:, current_time: Time.current)
+  def create(email:)
+    user = nil
+    event = nil
+
     ActiveRecord::Base.transaction do
       user = Models::User.create!(email: email)
-      user.messages << Models::Message::User.created(email: email)
+
+      account = Models::Account.create!(
+        name: "Account #{user.id}",
+        slug: "account-#{user.id}",
+        owner_id: user.id)
+
+      Models::UserAccount.create!(user_id: user.id, account_id: account.id)
+
+      event = user.events.create!(
+        account_id: account.id,
+        user_id: user.id,
+        body: Messages::User::Created.new(
+          email: user.email))
     end
 
-    user.freeze
+    [user.tap(&:readonly!), event.tap(&:readonly!)]
   rescue ActiveRecord::RecordInvalid => e
     raise Error.new(e.record.errors.full_messages.to_sentence)
   rescue ActiveRecord::RecordNotUnique => e
     raise Error.new("Database error: #{e.message}")
   end
 
-  def sync_async(account_id:, user_id:, id:)
+  def sync_async(account_id:, user_id:, id:,
+                 queue_until: nil, attempts_max: 1)
     user = Models::Account.find(account_id).users.find(id)
-    # sync_user_message = Messages::User.sync(attempts_max: 2)
 
-    # user.commands.create!(
-    #   user_id: user.id,
-    #   name: sync_user_message.name,
-    #   body: sync_user_message.body,
-    #   attempts_max: 2)
+    command = user.commands.create!(
+      account_id: account_id,
+      user_id: user_id,
+      body: Messages::User::Sync.new(
+        user: { id: id }),
+      attempts_max: attempts_max,
+      queue_until: queue_until)
 
-    user.messages.create!(
-      user_id: user.id,
-      body: Messages::User.sync,
-      attempts_max: 2)
-
-    user.readonly!
-    user.freeze
-
-    user
+    [user.tap(&:readonly!), command.tap(&:readonly!)]
   rescue ActiveRecord::RecordNotFound => e
     raise NotFound.new("Not found: #{e.message}")
   rescue ActiveRecord::RecordInvalid => e
     raise Error.new(e.record.errors.full_messages.to_sentence)
   end
 
-  # def sync_async(account_id:, user_id:, id:)
-  #   user = Models::Account.find(account_id).users.find(id)
-  #   sync_user_message = Messages::User.sync
+  def sync(account_id:, user_id:, id:)
+    user = Models::Account.find(account_id).users.find(id)
 
-  #   user.commands.create!(
-  #     user_id: user.id,
-  #     name: sync_user_message.name,
-  #     body: sync_user_message.body,
-  #     max_attempts: 2
-  #   )
-
-  #   user.readonly!
-  #   user.freeze
-
-  #   user
-  # rescue ActiveRecord::RecordNotFound => e
-  #   raise NotFound.new("Not found: #{e.message}")
-  # rescue ActiveRecord::RecordInvalid => e
-  #   raise Error.new(e.record.errors.full_messages.to_sentence)
-  # end
-
-  def sync(account_id:, user_id:, id:, current_time: Time.current)
-    user = Models::User.find(id)
-    synced_user_event = Messages::User.synced
-
-    user.events.create!(
+    event = user.events.create!(
       account_id: account_id,
       user_id: user_id,
-      name: synced_user_event.name,
-      body: synced_user_event.body)
+      body: Messages::User::Synced.new(
+        user: { id: id }))
 
-    user.freeze
-
-    user
+    [user.tap(&:readonly!), event.tap(&:readonly!)]
   rescue ActiveRecord::RecordNotFound => e
     raise NotFound.new("Not found: #{e.message}")
   rescue ActiveRecord::RecordInvalid => e

@@ -20,7 +20,6 @@ require_relative '../app/messages/user_pb'
 require_relative '../app/messages/account_pb'
 
 require_relative '../app/services/user'
-require_relative '../app/services/account'
 require_relative '../app/services/messaging/logger'
 require_relative '../app/services/messaging/message'
 

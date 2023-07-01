@@ -11,6 +11,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
     add_message "messages.User.Created" do
       optional :user, :message, 1, "messages.User"
       optional :email, :string, 2
+      optional :account_id, :int64, 3
     end
     add_message "messages.User.Sync" do
       optional :user, :message, 1, "messages.User"
