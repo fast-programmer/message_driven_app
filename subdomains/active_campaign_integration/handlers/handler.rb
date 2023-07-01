@@ -1,5 +1,3 @@
-require_relative 'user'
-
 module ActiveCampaignIntegration
   module Handlers
     module Handler
@@ -7,8 +5,8 @@ module ActiveCampaignIntegration
 
       def handle(message:, logger:)
         case message.body_class_name
-        when 'Messages::User::Created'
-          User.created(message: message, logger: logger)
+        when 'Messages::IAM::User::Created'
+          sleep(0.2)
         end
       end
     end

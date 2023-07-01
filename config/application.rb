@@ -9,19 +9,19 @@ Bundler.require(*Rails.groups)
 
 require_relative '../app/models/application_record'
 
-require_relative '../app/models/iam/user'
-require_relative '../app/models/iam/account'
-require_relative '../app/models/iam/user_account'
-
 require_relative '../app/models/messaging/queue'
 require_relative '../app/models/messaging/message'
 require_relative '../app/models/messaging/event'
 require_relative '../app/models/messaging/command'
 
+require_relative '../subdomains/iam/models/user'
+require_relative '../subdomains/iam/models/account'
+require_relative '../subdomains/iam/models/user_account'
+
 require_relative '../app/messages/iam/user_pb'
 require_relative '../app/messages/iam/account_pb'
 
-require_relative '../app/services/iam/user'
+require_relative '../subdomains/iam/services/user'
 
 require_relative '../app/services/messaging/logger'
 require_relative '../app/services/messaging/message'

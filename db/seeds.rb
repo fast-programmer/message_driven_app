@@ -1,18 +1,18 @@
 require_relative '../app/models/messaging/message'
-require_relative '../app/models/iam/user_account'
-require_relative '../app/models/iam/user'
-require_relative '../app/models/iam/account'
+
+require_relative '../subdomains/iam/models/user_account'
+require_relative '../subdomains/iam/models/user'
+require_relative '../subdomains/iam/models/account'
 
 require_relative '../app/messages/iam/user_pb'
 require_relative '../app/messages/iam/account_pb'
 
 Models::Messaging::Message.destroy_all
-# Models::Messaging::Message::Attempt.delete_all
-Models::Messaging::Queue.delete_all
+Models::Messaging::Queue.destroy_all
 
-Models::IAM::UserAccount.delete_all
-Models::IAM::Account.delete_all
-Models::IAM::User.delete_all
+Models::IAM::UserAccount.destroy_all
+Models::IAM::Account.destroy_all
+Models::IAM::User.destroy_all
 
 ActiveRecord::Base.connection.execute("SELECT setval('iam_users_id_seq', 1, false)")
 ActiveRecord::Base.connection.execute("SELECT setval('iam_accounts_id_seq', 1, false)")
