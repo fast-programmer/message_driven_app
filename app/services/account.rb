@@ -1,4 +1,4 @@
-require_relative '../messages/user'
+require_relative '../messages/user_pb'
 
 module Account
   module_function

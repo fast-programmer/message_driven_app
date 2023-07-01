@@ -16,8 +16,8 @@ require_relative '../app/models/messaging/message'
 require_relative '../app/models/messaging/event'
 require_relative '../app/models/messaging/command'
 
-require_relative '../app/messages/user'
-require_relative '../app/messages/account'
+require_relative '../app/messages/user_pb'
+require_relative '../app/messages/account_pb'
 
 require_relative '../app/services/user'
 require_relative '../app/services/account'

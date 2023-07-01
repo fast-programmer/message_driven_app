@@ -36,7 +36,8 @@ module Models
       validates :type, presence: true
       validates :messageable_type, presence: true
       validates :messageable_id, presence: true
-      validates :name, presence: true
+      validates :body_class_name, presence: true
+      validates :body_json, presence: true
       validates :status, presence: true
 
       validates :attempts_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
@@ -63,11 +64,11 @@ module Models
 
       def body=(body)
         self.body_class_name = body.class.name
-        self.body_json = body.class.encode(new_body)
+        self.body_json = JSON.parse(body.to_json)
       end
 
       def body
-        body_class_name.constantize.decode(body_json)
+        body_class_name.constantize.new(body_json)
       end
     end
   end

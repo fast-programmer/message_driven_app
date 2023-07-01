@@ -3,8 +3,8 @@ require_relative '../app/models/user_account'
 require_relative '../app/models/user'
 require_relative '../app/models/account'
 
-require_relative '../app/messages/user'
-require_relative '../app/messages/account'
+require_relative '../app/messages/user_pb'
+require_relative '../app/messages/account_pb'
 
 Models::Messaging::Message.destroy_all
 # Models::Messaging::Message::Attempt.delete_all

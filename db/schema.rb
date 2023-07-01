@@ -42,7 +42,7 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
     t.bigint "user_id", null: false
     t.text "type", null: false
     t.text "body_class_name", null: false
-    t.jsonb "body_json"
+    t.jsonb "body_json", null: false
     t.text "status", null: false
     t.text "messageable_type", null: false
     t.bigint "messageable_id", null: false
