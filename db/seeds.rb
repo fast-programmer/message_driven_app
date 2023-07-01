@@ -28,7 +28,7 @@ ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 
 
     user.events.create!(
       user_id: user.id,
-      body: Messages::User.created(email: user.email))
+      body: Messages::User::Created.new(email: user.email))
 
     account = Models::Account.create!(
       name: "Account #{i+1}", slug: "account-#{i+1}", owner_id: user.id)
@@ -50,7 +50,7 @@ ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 
     user.commands.create!(
       account_id: account.id,
       user_id: user.id,
-      body: Messages::User.sync,
+      body: Messages::User::Sync.new,
       queue_until: Time.current + 10.seconds)
   end
 end

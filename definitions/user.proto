@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package messages;
+
+message User {
+  int64 id = 1;
+
+  message Created {
+    User user = 1;
+
+    string email = 2;
+  }
+
+  message Sync {
+    User user = 1;
+  }
+
+  message Synced {
+    User user = 1;
+  }
+}

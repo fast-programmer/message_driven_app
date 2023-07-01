@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package messages;
+
+message Account {
+  int64 id = 1;
+
+  message Created {
+    Account account = 1;
+
+    string name = 2;
+    string slug = 3;
+    int64 owner_id = 4;
+  }
+}
