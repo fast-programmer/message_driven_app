@@ -5,11 +5,11 @@ require 'google/protobuf'
 
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("account.proto", :syntax => :proto3) do
-    add_message "messages.Account" do
+    add_message "messages.IAM.Account" do
       optional :id, :int64, 1
     end
-    add_message "messages.Account.Created" do
-      optional :account, :message, 1, "messages.Account"
+    add_message "messages.IAM.Account.Created" do
+      optional :account, :message, 1, "messages.IAM.Account"
       optional :name, :string, 2
       optional :slug, :string, 3
       optional :owner_id, :int64, 4
@@ -18,6 +18,8 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
 end
 
 module Messages
-  Account = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("messages.Account").msgclass
-  Account::Created = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("messages.Account.Created").msgclass
+  module IAM
+    Account = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("messages.IAM.Account").msgclass
+    Account::Created = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("messages.IAM.Account.Created").msgclass
+  end
 end

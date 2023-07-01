@@ -15,12 +15,27 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "accounts", force: :cascade do |t|
+  create_table "iam_accounts", force: :cascade do |t|
     t.integer "lock_version", default: 0, null: false
     t.text "name", null: false
     t.text "slug", null: false
     t.bigint "owner_id", null: false
-    t.index ["owner_id"], name: "index_accounts_on_owner_id"
+    t.index ["owner_id"], name: "index_iam_accounts_on_owner_id"
+  end
+
+  create_table "iam_user_accounts", force: :cascade do |t|
+    t.integer "lock_version", default: 0, null: false
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.index ["account_id"], name: "index_iam_user_accounts_on_account_id"
+    t.index ["user_id"], name: "index_iam_user_accounts_on_user_id"
+  end
+
+  create_table "iam_users", force: :cascade do |t|
+    t.integer "lock_version", default: 0, null: false
+    t.text "email", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "messaging_message_attempts", force: :cascade do |t|
@@ -37,9 +52,9 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
   end
 
   create_table "messaging_messages", force: :cascade do |t|
-    t.bigint "queue_id", null: false
     t.bigint "account_id", null: false
     t.bigint "user_id", null: false
+    t.bigint "queue_id", null: false
     t.text "status", null: false
     t.datetime "queue_until"
     t.integer "attempts_count", null: false
@@ -63,26 +78,11 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
     t.index ["name"], name: "index_messaging_queues_on_name", unique: true
   end
 
-  create_table "user_accounts", force: :cascade do |t|
-    t.integer "lock_version", default: 0, null: false
-    t.bigint "user_id", null: false
-    t.bigint "account_id", null: false
-    t.index ["account_id"], name: "index_user_accounts_on_account_id"
-    t.index ["user_id"], name: "index_user_accounts_on_user_id"
-  end
-
-  create_table "users", force: :cascade do |t|
-    t.integer "lock_version", default: 0, null: false
-    t.text "email", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-  end
-
-  add_foreign_key "accounts", "users", column: "owner_id"
+  add_foreign_key "iam_accounts", "iam_users", column: "owner_id"
+  add_foreign_key "iam_user_accounts", "iam_accounts", column: "account_id"
+  add_foreign_key "iam_user_accounts", "iam_users", column: "user_id"
   add_foreign_key "messaging_message_attempts", "messaging_messages", column: "message_id"
-  add_foreign_key "messaging_messages", "accounts"
+  add_foreign_key "messaging_messages", "iam_accounts", column: "account_id"
+  add_foreign_key "messaging_messages", "iam_users", column: "user_id"
   add_foreign_key "messaging_messages", "messaging_queues", column: "queue_id"
-  add_foreign_key "messaging_messages", "users"
-  add_foreign_key "user_accounts", "accounts"
-  add_foreign_key "user_accounts", "users"
 end
