@@ -68,9 +68,8 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["messageable_type", "messageable_id"], name: "index_messaging_messages_on_messageable_type_and_messageable_id"
-    t.index ["status", "created_at"], name: "index_messaging_messages_on_status_and_created_at"
+    t.index ["queue_id", "status", "priority", "created_at"], name: "index_messages_on_queue_status_priority_created"
     t.index ["status"], name: "index_messaging_messages_on_status"
-    t.index ["type"], name: "index_messaging_messages_on_type"
   end
 
   create_table "messaging_queues", force: :cascade do |t|

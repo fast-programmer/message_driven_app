@@ -31,9 +31,10 @@ class CreateMessagingMessages < ActiveRecord::Migration[6.0]
 
     add_foreign_key :messaging_messages, :messaging_queues, column: :queue_id
 
-    add_index :messaging_messages, :type
     add_index :messaging_messages, :status
-    add_index :messaging_messages, [:status, :created_at]
+    add_index :messaging_messages,
+      [:queue_id, :status, :priority, :created_at],
+      name: 'index_messages_on_queue_status_priority_created'
     add_index :messaging_messages, [:messageable_type, :messageable_id]
   end
 end

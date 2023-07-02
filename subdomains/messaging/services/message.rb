@@ -71,16 +71,6 @@ module Messaging
       end
     end
 
-    def self.handle_with_optional_connection(message:, handler:, logger:, use_connection:)
-      if use_connection
-        ActiveRecord::Base.connection_pool.with_connection do
-          handler.handle(message: message, logger: logger)
-        end
-      else
-        handler.handle(message: message, logger: logger)
-      end
-    end
-
     def self.handle_message(message:, logger:, handler:, use_connection: true)
       successful = nil
       started_at = nil
@@ -121,6 +111,16 @@ module Messaging
           started_at: started_at,
           ended_at: ended_at,
           error: error)
+      end
+    end
+
+    def self.handle_with_optional_connection(message:, handler:, logger:, use_connection:)
+      if use_connection
+        ActiveRecord::Base.connection_pool.with_connection do
+          handler.handle(message: message, logger: logger)
+        end
+      else
+        handler.handle(message: message, logger: logger)
       end
     end
 
@@ -189,7 +189,7 @@ module Messaging
                       .where(queue_id: queue_id)
                       .where(status: Models::Message::STATUS[:unhandled])
                       .where('queue_until IS NULL OR queue_until < ?', current_time)
-                      .order(created_at: :asc)
+                      .order(priority: :desc, created_at: :asc)
                       .limit(1)
                       .lock('FOR UPDATE SKIP LOCKED')
                       .first
