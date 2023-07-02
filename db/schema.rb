@@ -56,6 +56,7 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
     t.bigint "user_id", null: false
     t.bigint "queue_id", null: false
     t.text "status", null: false
+    t.bigint "priority", null: false
     t.datetime "queue_until"
     t.integer "attempts_count", null: false
     t.integer "attempts_max", null: false

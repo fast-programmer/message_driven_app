@@ -1,5 +1,5 @@
-module Models
-  module Messaging
+module Messaging
+  module Models
     class Command < Message
     end
   end

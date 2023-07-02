@@ -1,6 +1,6 @@
-module Models
-  module Messaging
-    class Message < ::ApplicationRecord
+module Messaging
+  module Models
+    class Message < ApplicationRecord
       self.table_name = 'messaging_messages'
 
       STATUS = {
@@ -11,15 +11,17 @@ module Models
       }.freeze
 
       attribute :status, :text, default: STATUS[:unhandled]
+
+      attribute :priority, :integer, default: 0
       attribute :attempts_count, :integer, default: 0
       attribute :attempts_max, :integer, default: 1
 
-      belongs_to :queue, foreign_key: 'queue_id', class_name: '::Models::Messaging::Queue'
+      belongs_to :queue, foreign_key: 'queue_id', class_name: '::Messaging::Models::Queue'
       belongs_to :account
       belongs_to :user
       belongs_to :messageable, polymorphic: true
 
-      has_many :attempts, class_name: '::Models::Messaging::Message::Attempt', dependent: :destroy
+      has_many :attempts, class_name: '::Messaging::Models::Message::Attempt', dependent: :destroy
 
       class Attempt < ApplicationRecord
         self.table_name = 'messaging_message_attempts'
@@ -29,20 +31,23 @@ module Models
         validates :error_class_name, :error_message, :error_backtrace, presence: true, unless: :successful?
         validates :error_class_name, :error_message, :error_backtrace, absence: true, if: :successful?
 
-        belongs_to :message, foreign_key: 'message_id', class_name: '::Models::Messaging::Message'
+        belongs_to :message, foreign_key: 'message_id', class_name: '::Messaging::Models::Message'
       end
 
       validates :account_id, presence: true
       validates :user_id, presence: true
       validates :type, presence: true
-      validates :messageable_type, presence: true
-      validates :messageable_id, presence: true
-      validates :body_class_name, presence: true
-      validates :body_json, presence: true, unless: -> { body_json == {} }
-      validates :status, presence: true
 
+      validates :status, presence: true
+      validates :priority, numericality: { greater_than_or_equal_to: 0 }
       validates :attempts_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
       validates :attempts_max, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
+
+      validates :body_class_name, presence: true
+      validates :body_json, presence: true, unless: -> { body_json == {} }
+
+      validates :messageable_type, presence: true
+      validates :messageable_id, presence: true
 
       validate :validate_attempts_count_not_greater_than_attempts_max
       def validate_attempts_count_not_greater_than_attempts_max
@@ -63,7 +68,7 @@ module Models
         self.account_id ||= messageable.account_id if messageable.respond_to?(:account_id)
       end
 
-      def body=(body)
+     def body=(body)
         self.body_class_name = body.class.name
         self.body_json = JSON.parse(body.to_json)
       end

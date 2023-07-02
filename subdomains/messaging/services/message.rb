@@ -12,7 +12,7 @@ module Messaging
       handler:,
       poll:,
       concurrency:,
-      queue_id: Models::Messaging::Queue.default_id,
+      queue_id: Models::Queue.default_id,
       logger: Logger.create
     )
       queue = Queue.new
@@ -67,11 +67,21 @@ module Messaging
       while @is_handling
         message = queue.pop
 
-        handle_message(message: message, handler: handler, logger: logger)
+        handle_message(message: message, handler: handler, logger: logger, use_connection: true)
       end
     end
 
-    def self.handle_message(message:, logger:, handler:)
+    def self.handle_with_optional_connection(message:, handler:, logger:, use_connection:)
+      if use_connection
+        ActiveRecord::Base.connection_pool.with_connection do
+          handler.handle(message: message, logger: logger)
+        end
+      else
+        handler.handle(message: message, logger: logger)
+      end
+    end
+
+    def self.handle_message(message:, logger:, handler:, use_connection: true)
       successful = nil
       started_at = nil
       ended_at = nil
@@ -81,9 +91,11 @@ module Messaging
       begin
         started_at = Time.current
 
-        ActiveRecord::Base.connection_pool.with_connection do
-          return_value = handler.handle(message: message, logger: logger)
-        end
+        return_value = handle_with_optional_connection(
+          message: message,
+          handler: handler,
+          logger: logger,
+          use_connection: use_connection)
 
         ended_at = Time.current
 
@@ -114,7 +126,7 @@ module Messaging
 
     def self.handled(message:, started_at:, ended_at:, return_value:)
       message.attempts_count += 1
-      message.status = Models::Messaging::Message::STATUS[:handled]
+      message.status = Models::Message::STATUS[:handled]
 
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
@@ -136,10 +148,10 @@ module Messaging
       message.attempts_count += 1
 
       if message.attempts_count < message.attempts_max
-        message.status = Models::Messaging::Message::STATUS[:unhandled]
+        message.status = Models::Message::STATUS[:unhandled]
         message.queue_until = calculate_queue_until(message.attempts_count)
       else
-        message.status = Models::Messaging::Message::STATUS[:failed]
+        message.status = Models::Message::STATUS[:failed]
       end
 
       ActiveRecord::Base.connection_pool.with_connection do
@@ -173,16 +185,16 @@ module Messaging
     def self.dequeue(queue_id:, current_time:)
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
-          message = Models::Messaging::Message
+          message = Models::Message
                       .where(queue_id: queue_id)
-                      .where(status: Models::Messaging::Message::STATUS[:unhandled])
+                      .where(status: Models::Message::STATUS[:unhandled])
                       .where('queue_until IS NULL OR queue_until < ?', current_time)
                       .order(created_at: :asc)
                       .limit(1)
                       .lock('FOR UPDATE SKIP LOCKED')
                       .first
 
-          message&.update!(status: Models::Messaging::Message::STATUS[:handling])
+          message&.update!(status: Models::Message::STATUS[:handling])
 
           message
         end

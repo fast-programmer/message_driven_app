@@ -8,6 +8,8 @@ class CreateMessagingMessages < ActiveRecord::Migration[6.0]
 
       t.text :status, null: false
 
+      t.bigint :priority, null: false
+
       t.column :queue_until, 'timestamptz'
 
       t.integer :attempts_count, null: false

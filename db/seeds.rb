@@ -1,14 +1,8 @@
-require_relative '../app/models/messaging/message'
+require_relative '../subdomains/iam'
+require_relative '../subdomains/messaging'
 
-require_relative '../subdomains/iam/models/user_account'
-require_relative '../subdomains/iam/models/user'
-require_relative '../subdomains/iam/models/account'
-
-require_relative '../subdomains/iam/messages/user_pb'
-require_relative '../subdomains/iam/messages/account_pb'
-
-Models::Messaging::Message.destroy_all
-Models::Messaging::Queue.destroy_all
+Messaging::Models::Message.destroy_all
+Messaging::Models::Queue.destroy_all
 
 IAM::Models::UserAccount.destroy_all
 IAM::Models::Account.destroy_all
@@ -30,5 +24,6 @@ ActiveRecord::Base.connection.execute("SELECT setval('messaging_queues_id_seq', 
     user_id: event.user_id,
     id: user.id,
     queue_until: Time.current + 1.seconds,
-    attempts_max: 2)
+    attempts_max: 2,
+    priority: 10)
 end

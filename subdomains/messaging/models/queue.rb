@@ -1,5 +1,5 @@
-module Models
-  module Messaging
+module Messaging
+  module Models
     class Queue < ::ApplicationRecord
       self.table_name = 'messaging_queues'
 

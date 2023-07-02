@@ -35,7 +35,7 @@ module IAM
 
     def sync_async(account_id:, user_id:,
                    id:,
-                   queue_until: nil, attempts_max: 1)
+                   queue_until: nil, attempts_max: 1, priority: 0)
       user = Models::Account.find(account_id).users.find(id)
 
       command = user.commands.create!(
@@ -44,7 +44,8 @@ module IAM
         body: Messages::User::Sync.new(
           user: { id: id }),
         attempts_max: attempts_max,
-        queue_until: queue_until)
+        queue_until: queue_until,
+        priority: priority)
 
       [user.tap(&:readonly!), command.tap(&:readonly!)]
     rescue ActiveRecord::RecordNotFound => e
