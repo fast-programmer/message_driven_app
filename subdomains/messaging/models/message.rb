@@ -3,17 +3,7 @@ module Messaging
     class Message < ApplicationRecord
       self.table_name = 'messaging_messages'
 
-      STATUS = {
-        unhandled: 'unhandled',
-        handling: 'handling',
-        handled: 'handled',
-        failed: 'failed'
-      }.freeze
-
-      attribute :status, :text, default: STATUS[:unhandled]
-
       attribute :priority, :integer, default: 0
-      attribute :attempts_count, :integer, default: 0
       attribute :attempts_max, :integer, default: 1
 
       belongs_to :queue, foreign_key: 'queue_id', class_name: '::Messaging::Models::Queue'
@@ -21,26 +11,13 @@ module Messaging
       belongs_to :user
       belongs_to :messageable, polymorphic: true
 
-      has_many :attempts, class_name: '::Messaging::Models::Message::Attempt', dependent: :destroy
-
-      class Attempt < ApplicationRecord
-        self.table_name = 'messaging_message_attempts'
-
-        validates :successful, inclusion: { in: [true, false] }
-
-        validates :error_class_name, :error_message, :error_backtrace, presence: true, unless: :successful?
-        validates :error_class_name, :error_message, :error_backtrace, absence: true, if: :successful?
-
-        belongs_to :message, foreign_key: 'message_id', class_name: '::Messaging::Models::Message'
-      end
+      has_many :handler_messages, class_name: '::Messaging::Models::HandlerMessage'
+      has_many :handlers, through: :handler_messages
 
       validates :account_id, presence: true
       validates :user_id, presence: true
       validates :type, presence: true
 
-      validates :status, presence: true
-      validates :priority, numericality: { greater_than_or_equal_to: 0 }
-      validates :attempts_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
       validates :attempts_max, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
 
       validates :body_class_name, presence: true
@@ -48,13 +25,6 @@ module Messaging
 
       validates :messageable_type, presence: true
       validates :messageable_id, presence: true
-
-      validate :validate_attempts_count_not_greater_than_attempts_max
-      def validate_attempts_count_not_greater_than_attempts_max
-        if attempts_count > attempts_max
-          errors.add(:attempts_count, 'cannot be greater than attempts_max')
-        end
-      end
 
       after_initialize :set_default_queue, if: :new_record?
 
@@ -68,7 +38,20 @@ module Messaging
         self.account_id ||= messageable.account_id if messageable.respond_to?(:account_id)
       end
 
-     def body=(body)
+      after_create :create_handler_messages
+
+      def create_handler_messages
+        Models::Handler.where(enabled: true).find_each do |handler|
+          handler_messages.create!(
+            handler: handler,
+            status: Models::HandlerMessage::STATUS[:unhandled],
+            priority: priority || 0,
+            attempts_count: 0,
+            attempts_max: attempts_max || 1)
+        end
+      end
+
+      def body=(body)
         self.body_class_name = body.class.name
         self.body_json = JSON.parse(body.to_json)
       end

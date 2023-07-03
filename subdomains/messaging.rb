@@ -1,5 +1,7 @@
 require_relative 'messaging/models/queue'
+require_relative 'messaging/models/handler'
 require_relative 'messaging/models/message'
+require_relative 'messaging/models/handler_message'
 require_relative 'messaging/models/event'
 require_relative 'messaging/models/command'
 

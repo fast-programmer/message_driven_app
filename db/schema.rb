@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_06_25_110343) do
+ActiveRecord::Schema.define(version: 2023_07_03_092160) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -38,8 +38,8 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "messaging_message_attempts", force: :cascade do |t|
-    t.bigint "message_id", null: false
+  create_table "messaging_handler_message_attempts", force: :cascade do |t|
+    t.bigint "handler_message_id", null: false
     t.integer "index", null: false
     t.datetime "started_at", null: false
     t.datetime "ended_at", null: false
@@ -48,18 +48,42 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
     t.text "error_class_name"
     t.text "error_message"
     t.text "error_backtrace", array: true
-    t.index ["message_id"], name: "index_messaging_message_attempts_on_message_id"
+    t.index ["handler_message_id"], name: "index_messaging_handler_message_attempts_on_handler_message_id"
   end
 
-  create_table "messaging_messages", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.bigint "user_id", null: false
-    t.bigint "queue_id", null: false
+  create_table "messaging_handler_messages", force: :cascade do |t|
+    t.bigint "message_id", null: false
+    t.bigint "handler_id", null: false
     t.text "status", null: false
     t.bigint "priority", null: false
     t.datetime "queue_until"
     t.integer "attempts_count", null: false
     t.integer "attempts_max", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["message_id", "handler_id"], name: "index_messaging_handler_messages_on_message_id_and_handler_id", unique: true
+    t.index ["status"], name: "index_messaging_handler_messages_on_status"
+  end
+
+  create_table "messaging_handlers", force: :cascade do |t|
+    t.bigint "queue_id", null: false
+    t.text "slug", null: false
+    t.text "name", null: false
+    t.text "class_name", null: false
+    t.text "method_name", null: false
+    t.boolean "enabled", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["queue_id", "slug"], name: "index_messaging_handlers_on_queue_id_and_slug", unique: true
+  end
+
+  create_table "messaging_messages", force: :cascade do |t|
+    t.bigint "queue_id", null: false
+    t.bigint "priority", null: false
+    t.datetime "queue_until"
+    t.integer "attempts_max", null: false
+    t.bigint "account_id", null: false
+    t.bigint "user_id", null: false
     t.text "type", null: false
     t.text "body_class_name", null: false
     t.jsonb "body_json", null: false
@@ -67,9 +91,6 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
     t.bigint "messageable_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["messageable_type", "messageable_id"], name: "index_messaging_messages_on_messageable_type_and_messageable_id"
-    t.index ["queue_id", "status", "priority", "created_at"], name: "index_messages_on_queue_status_priority_created"
-    t.index ["status"], name: "index_messaging_messages_on_status"
   end
 
   create_table "messaging_queues", force: :cascade do |t|
@@ -81,7 +102,10 @@ ActiveRecord::Schema.define(version: 2023_06_25_110343) do
   add_foreign_key "iam_accounts", "iam_users", column: "owner_id"
   add_foreign_key "iam_user_accounts", "iam_accounts", column: "account_id"
   add_foreign_key "iam_user_accounts", "iam_users", column: "user_id"
-  add_foreign_key "messaging_message_attempts", "messaging_messages", column: "message_id"
+  add_foreign_key "messaging_handler_message_attempts", "messaging_handler_messages", column: "handler_message_id"
+  add_foreign_key "messaging_handler_messages", "messaging_handlers", column: "handler_id"
+  add_foreign_key "messaging_handler_messages", "messaging_messages", column: "message_id"
+  add_foreign_key "messaging_handlers", "messaging_queues", column: "queue_id"
   add_foreign_key "messaging_messages", "iam_accounts", column: "account_id"
   add_foreign_key "messaging_messages", "iam_users", column: "user_id"
   add_foreign_key "messaging_messages", "messaging_queues", column: "queue_id"

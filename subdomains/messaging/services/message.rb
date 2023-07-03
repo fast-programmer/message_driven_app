@@ -19,8 +19,8 @@ module Messaging
 
       @is_handling = true
 
-      workers = create_workers(concurrency, queue, logger, handler)
-      loop_dequeue_message(queue, logger, queue_id, concurrency, poll)
+      workers = create_workers(concurrency, queue, logger)
+      loop_dequeue_handler_message(queue, logger, queue_id, concurrency, poll)
 
       workers.each(&:join)
     end
@@ -29,17 +29,17 @@ module Messaging
       @is_handling = false
     end
 
-    def self.create_workers(concurrency, queue, logger, handler)
+    def self.create_workers(concurrency, queue, logger)
       concurrency.times.map do
         Thread.new do
           Thread.current.abort_on_exception = true
 
-          worker_loop(queue, logger, handler)
+          worker_loop(queue, logger)
         end
       end
     end
 
-    def self.loop_dequeue_message(queue, logger, queue_id, concurrency, poll)
+    def self.loop_dequeue_handler_message(queue, logger, queue_id, concurrency, poll)
       while @is_handling
         unless queue.length < concurrency
           logger.info('queue.length >= concurrency')
@@ -49,9 +49,9 @@ module Messaging
           next
         end
 
-        message = dequeue(queue_id: queue_id, current_time: Time.current)
+        handler_message = dequeue(queue_id: queue_id, current_time: Time.current)
 
-        unless message
+        unless handler_message
           logger.info('no messages to handle')
 
           sleep poll
@@ -59,19 +59,19 @@ module Messaging
           next
         end
 
-        queue.push(message)
+        queue.push(handler_message)
       end
     end
 
-    def self.worker_loop(queue, logger, handler)
+    def self.worker_loop(queue, logger)
       while @is_handling
-        message = queue.pop
+        handler_message = queue.pop
 
-        handle_message(message: message, handler: handler, logger: logger, use_connection: true)
+        handle_message(handler_message: handler_message, logger: logger, use_connection: true)
       end
     end
 
-    def self.handle_message(message:, logger:, handler:, use_connection: true)
+    def self.handle_message(handler_message:, logger:, use_connection: true)
       successful = nil
       started_at = nil
       ended_at = nil
@@ -82,8 +82,7 @@ module Messaging
         started_at = Time.current
 
         return_value = handle_with_optional_connection(
-          message: message,
-          handler: handler,
+          handler_message: handler_message,
           logger: logger,
           use_connection: use_connection)
 
@@ -101,39 +100,45 @@ module Messaging
 
       if successful
         handled(
-          message: message,
+          handler_message: handler_message,
           started_at: started_at,
           ended_at: ended_at,
           return_value: return_value)
       else
         failed(
-          message: message,
+          handler_message: handler_message,
           started_at: started_at,
           ended_at: ended_at,
           error: error)
       end
     end
 
-    def self.handle_with_optional_connection(message:, handler:, logger:, use_connection:)
+    def self.handle_with_optional_connection(handler_message:, logger:, use_connection:)
       if use_connection
         ActiveRecord::Base.connection_pool.with_connection do
-          handler.handle(message: message, logger: logger)
+          handler_message.handler.class_name.constantize.send(
+            handler_message.handler.method_name,
+            message: handler_message.message,
+            logger: logger)
         end
       else
-        handler.handle(message: message, logger: logger)
+        handler_message.handler.class_name.constantize.send(
+          handler_message.handler.method_name,
+          message: handler_message.message,
+          logger: logger)
       end
     end
 
-    def self.handled(message:, started_at:, ended_at:, return_value:)
-      message.attempts_count += 1
-      message.status = Models::Message::STATUS[:handled]
+    def self.handled(handler_message:, started_at:, ended_at:, return_value:)
+      handler_message.attempts_count += 1
+      handler_message.status = Models::HandlerMessage::STATUS[:handled]
 
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
-          message.save!
+          handler_message.save!
 
-          message.attempts.create!(
-            index: message.attempts_count,
+          handler_message.attempts.create!(
+            index: handler_message.attempts_count,
             successful: true,
             started_at: started_at,
             ended_at: ended_at,
@@ -141,25 +146,25 @@ module Messaging
         end
       end
 
-      message
+      handler_message
     end
 
-    def self.failed(message:, started_at:, ended_at:, error:)
-      message.attempts_count += 1
+    def self.failed(handler_message:, started_at:, ended_at:, error:)
+      handler_message.attempts_count += 1
 
-      if message.attempts_count < message.attempts_max
-        message.status = Models::Message::STATUS[:unhandled]
-        message.queue_until = calculate_queue_until(message.attempts_count)
+      if handler_message.attempts_count < handler_message.attempts_max
+        handler_message.status = Models::HandlerMessage::STATUS[:unhandled]
+        handler_message.queue_until = calculate_queue_until(handler_message.attempts_count)
       else
-        message.status = Models::Message::STATUS[:failed]
+        handler_message.status = Models::HandlerMessage::STATUS[:failed]
       end
 
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
-          message.save!
+          handler_message.save!
 
-          message.attempts.create!(
-            index: message.attempts_count,
+          handler_message.attempts.create!(
+            index: handler_message.attempts_count,
             successful: false,
             started_at: started_at,
             ended_at: ended_at,
@@ -169,7 +174,7 @@ module Messaging
         end
       end
 
-      message
+      handler_message
     end
 
     def self.calculate_queue_until(attempt_count)
@@ -185,18 +190,19 @@ module Messaging
     def self.dequeue(queue_id:, current_time:)
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
-          message = Models::Message
-                      .where(queue_id: queue_id)
-                      .where(status: Models::Message::STATUS[:unhandled])
-                      .where('queue_until IS NULL OR queue_until < ?', current_time)
-                      .order(priority: :desc, created_at: :asc)
-                      .limit(1)
-                      .lock('FOR UPDATE SKIP LOCKED')
-                      .first
+          handler_message = Models::HandlerMessage
+                              .joins(:message)
+                              .where("messaging_messages.queue_id = ?", queue_id)
+                              .where(status: Models::HandlerMessage::STATUS[:unhandled])
+                              .where('messaging_handler_messages.queue_until IS NULL OR messaging_handler_messages.queue_until < ?', current_time)
+                              .order(priority: :desc, created_at: :asc)
+                              .limit(1)
+                              .lock('FOR UPDATE SKIP LOCKED')
+                              .first
 
-          message&.update!(status: Models::Message::STATUS[:handling])
+          handler_message&.update!(status: Models::HandlerMessage::STATUS[:handling])
 
-          message
+          handler_message
         end
       end
     end

@@ -17,6 +17,8 @@ module Messaging
       validates :name, presence: true, uniqueness: true
 
       has_many :messages, -> { order(created_at: :asc) }
+
+      has_many :handlers, class_name: '::Messaging::Models::Handler', foreign_key: :queue_id
     end
   end
 end

@@ -1,7 +1,7 @@
-class CreateMessagingMessageAttempts < ActiveRecord::Migration[6.0]
+class CreateMessagingHandlerMessageAttempts < ActiveRecord::Migration[6.0]
   def change
-    create_table :messaging_message_attempts do |t|
-      t.references :message, null: false, foreign_key: { to_table: :messaging_messages }
+    create_table :messaging_handler_message_attempts do |t|
+      t.references :handler_message, null: false, foreign_key: { to_table: :messaging_handler_messages }
       t.integer :index, null: false
 
       t.column :started_at, 'timestamptz', null: false
