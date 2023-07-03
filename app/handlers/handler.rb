@@ -8,9 +8,14 @@ module Handlers
       # sleep(rand(1..5))
       # raise StandardError.new('fake error')
 
-      IAM::Handlers::Handler.handle(message: message, logger: logger)
-      ActiveCampaignIntegration::Handlers::Handler.handle(message: message, logger: logger)
-      MailchimpIntegration::Handlers::Handler.handle(message: message, logger: logger)
+      case message.body_class_name
+      when 'IAM::Messages::Handler::Handle'
+        IAM::Handlers::Handler.handle(message: message, logger: logger)
+      when 'ActiveCampaignIntegration::Messages::Handler::Handle'
+        ActiveCampaignIntegration::Handlers::Handler.handle(message: message, logger: logger)
+      when 'MailchimpIntegration::Messages::Handler::Handle'
+        MailChimpIntegration::Handlers::Handler.handle(message: message, logger: logger)
+      end
 
       logger.info("message #{message.id} > handled #{message.body.class.name}")
 
