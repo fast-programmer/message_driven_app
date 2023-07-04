@@ -2,10 +2,10 @@ module IAM
   module Handlers
     module User
       module Sync
-        extend self
+        def self.handle(message:, logger:)
+          logger.info('IAM::Handlers::User::Sync')
 
-        def handle(message:, logger:)
-          User.sync(
+          IAM::User.sync(
             account_id: message.account_id,
             user_id: message.user_id,
             id: message.body.user.id)

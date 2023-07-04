@@ -17,6 +17,10 @@ module Messaging
 
       has_many :handler_messages, class_name: '::Messaging::Models::HandlerMessage'
       has_many :messages, through: :handler_messages
+
+      def handles?(message:)
+        self.class_name.constantize.handles?(message: message)
+      end
     end
   end
 end

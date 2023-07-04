@@ -14,8 +14,6 @@ require_relative '../subdomains/messaging'
 require_relative '../subdomains/active_campaign_integration'
 require_relative '../subdomains/mailchimp_integration'
 
-require_relative '../app/handlers/handler'
-
 module MessageDrivenApp
   class Application < Rails::Application
     config.load_defaults 6.0

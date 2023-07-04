@@ -42,12 +42,14 @@ module Messaging
 
       def create_handler_messages
         Models::Handler.where(enabled: true).find_each do |handler|
-          handler_messages.create!(
-            handler: handler,
-            status: Models::HandlerMessage::STATUS[:unhandled],
-            priority: priority || 0,
-            attempts_count: 0,
-            attempts_max: attempts_max || 1)
+          if handler.handles?(message: self)
+            handler_messages.create!(
+              handler: handler,
+              status: Models::HandlerMessage::STATUS[:unhandled],
+              priority: priority || 0,
+              attempts_count: 0,
+              attempts_max: attempts_max || 1)
+          end
         end
       end
 

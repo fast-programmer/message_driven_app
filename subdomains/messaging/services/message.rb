@@ -9,7 +9,6 @@ module Messaging
     @is_handling = false
 
     def self.handle(
-      handler:,
       poll:,
       concurrency:,
       queue_id: Models::Queue.default_id,

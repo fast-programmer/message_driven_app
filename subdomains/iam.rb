@@ -7,6 +7,6 @@ require_relative 'iam/models/account'
 
 require_relative 'iam/services/user'
 
-require_relative 'iam/handlers/handler'
+require_relative 'iam/handler'
 
 
