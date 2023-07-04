@@ -7,7 +7,7 @@ class CreateMessagingHandlerMessages < ActiveRecord::Migration[6.0]
       t.text :status, null: false
 
       t.bigint :priority, null: false
-      t.column :queue_until, 'timestamptz'
+      t.column :delayed_until, 'timestamptz'
       t.integer :attempts_count, null: false
       t.integer :attempts_max, null: false
 

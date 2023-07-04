@@ -4,7 +4,7 @@ class CreateMessagingMessages < ActiveRecord::Migration[6.0]
       t.bigint :queue_id, null: false
 
       t.bigint :priority, null: false
-      t.column :queue_until, 'timestamptz'
+      t.column :delayed_until, 'timestamptz'
       t.integer :attempts_max, null: false
 
       t.bigint :account_id, null: false

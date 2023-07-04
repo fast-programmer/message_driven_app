@@ -56,7 +56,7 @@ ActiveRecord::Schema.define(version: 2023_07_03_092160) do
     t.bigint "handler_id", null: false
     t.text "status", null: false
     t.bigint "priority", null: false
-    t.datetime "queue_until"
+    t.datetime "delayed_until"
     t.integer "attempts_count", null: false
     t.integer "attempts_max", null: false
     t.datetime "created_at", null: false
@@ -80,7 +80,7 @@ ActiveRecord::Schema.define(version: 2023_07_03_092160) do
   create_table "messaging_messages", force: :cascade do |t|
     t.bigint "queue_id", null: false
     t.bigint "priority", null: false
-    t.datetime "queue_until"
+    t.datetime "delayed_until"
     t.integer "attempts_max", null: false
     t.bigint "account_id", null: false
     t.bigint "user_id", null: false

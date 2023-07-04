@@ -131,6 +131,7 @@ module Messaging
     def self.handled(handler_message:, started_at:, ended_at:, return_value:)
       handler_message.attempts_count += 1
       handler_message.status = Models::HandlerMessage::STATUS[:handled]
+      handler_message.delayed_until = nil
 
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
@@ -152,8 +153,8 @@ module Messaging
       handler_message.attempts_count += 1
 
       if handler_message.attempts_count < handler_message.attempts_max
-        handler_message.status = Models::HandlerMessage::STATUS[:unhandled]
-        handler_message.queue_until = calculate_queue_until(handler_message.attempts_count)
+        handler_message.status = Models::HandlerMessage::STATUS[:delayed]
+        handler_message.delayed_until = calculate_delayed_until(handler_message.attempts_count)
       else
         handler_message.status = Models::HandlerMessage::STATUS[:failed]
       end
@@ -176,7 +177,7 @@ module Messaging
       handler_message
     end
 
-    def self.calculate_queue_until(attempt_count)
+    def self.calculate_delayed_until(attempt_count)
       backoff_time = sidekiq_backoff(attempt_count)
 
       Time.current + backoff_time
@@ -190,16 +191,19 @@ module Messaging
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
           handler_message = Models::HandlerMessage
-                              .joins(:message)
-                              .where("messaging_messages.queue_id = ?", queue_id)
-                              .where(status: Models::HandlerMessage::STATUS[:unhandled])
-                              .where('messaging_handler_messages.queue_until IS NULL OR messaging_handler_messages.queue_until < ?', current_time)
+                              .where(
+                                "(status = :unhandled) OR (status = :delayed AND delayed_until < :current_time)",
+                                unhandled: Models::HandlerMessage::STATUS[:unhandled],
+                                delayed: Models::HandlerMessage::STATUS[:delayed],
+                                current_time: current_time)
                               .order(priority: :desc, created_at: :asc)
                               .limit(1)
                               .lock('FOR UPDATE SKIP LOCKED')
                               .first
 
-          handler_message&.update!(status: Models::HandlerMessage::STATUS[:handling])
+          handler_message&.update!(
+              status: Models::HandlerMessage::STATUS[:handling],
+              delayed_until: nil)
 
           handler_message
         end

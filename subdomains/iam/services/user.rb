@@ -33,19 +33,17 @@ module IAM
       raise Error.new("Database error: #{e.message}")
     end
 
-    def sync_async(account_id:, user_id:,
-                   id:,
-                   queue_until: nil, attempts_max: 1, priority: 0)
+    def sync_async(account_id:, user_id:, id:,
+                   delayed_until: nil, priority: 0, attempts_max: 1)
       user = Models::Account.find(account_id).users.find(id)
 
       command = user.commands.create!(
         account_id: account_id,
         user_id: user_id,
-        body: Messages::User::Sync.new(
-          user: { id: id }),
-        attempts_max: attempts_max,
-        queue_until: queue_until,
-        priority: priority)
+        body: Messages::User::Sync.new(user: { id: id }),
+        delayed_until: delayed_until,
+        priority: priority,
+        attempts_max: attempts_max)
 
       [user.tap(&:readonly!), command.tap(&:readonly!)]
     rescue ActiveRecord::RecordNotFound => e
@@ -54,15 +52,13 @@ module IAM
       raise Error.new(e.record.errors.full_messages.to_sentence)
     end
 
-    def sync(account_id:, user_id:,
-             id:)
+    def sync(account_id:, user_id:, id:)
       user = Models::Account.find(account_id).users.find(id)
 
       event = user.events.create!(
         account_id: account_id,
         user_id: user_id,
-        body: Messages::User::Synced.new(
-          user: { id: id }))
+        body: Messages::User::Synced.new(user: { id: id }))
 
       [user.tap(&:readonly!), event.tap(&:readonly!)]
     rescue ActiveRecord::RecordNotFound => e

@@ -7,6 +7,7 @@ module Messaging
         unhandled: 'unhandled',
         handling: 'handling',
         handled: 'handled',
+        delayed: 'delayed',
         failed: 'failed'
       }.freeze
 
@@ -15,6 +16,12 @@ module Messaging
       attribute :priority, :integer, default: 0
       attribute :attempts_count, :integer, default: 0
       attribute :attempts_max, :integer, default: 1
+
+      # def delayed_until=(value)
+      #   self.status = Models::Message::STATUS[:delayed] if value.present?
+
+      #   super(value)
+      # end
 
       class Attempt < ApplicationRecord
         self.table_name = 'messaging_handler_message_attempts'
@@ -34,7 +41,17 @@ module Messaging
       validates :message_id, presence: true
       validates :handler_id, presence: true
 
-      validates :status, presence: true
+      validates :status, presence: true,
+        inclusion: { in: STATUS.values, message: "%{value} is not a valid status" }
+
+      validate :validate_delayed_until
+      def validate_delayed_until
+        if status == STATUS[:delayed] && delayed_until.nil?
+          errors.add(:delayed_until, 'must be present when status is delayed')
+        elsif status != STATUS[:delayed] && delayed_until.present?
+          errors.add(:delayed_until, 'must be nil when status is not delayed')
+        end
+      end
 
       validates :priority, numericality: { greater_than_or_equal_to: 0 }
       validates :attempts_count, presence: true, numericality: {
@@ -47,14 +64,6 @@ module Messaging
         if attempts_count > attempts_max
           errors.add(:attempts_count, 'cannot be greater than attempts_max')
         end
-      end
-
-      def queue_until=(time)
-        self[:queue_until] = time.nil? ? nil : time.utc
-      end
-
-      def queue_until
-        self[:queue_until]&.in_time_zone
       end
     end
   end

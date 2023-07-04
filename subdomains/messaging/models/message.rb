@@ -33,7 +33,6 @@ module Messaging
       end
 
       before_validation :set_account_id
-
       def set_account_id
         self.account_id ||= messageable.account_id if messageable.respond_to?(:account_id)
       end
@@ -45,7 +44,8 @@ module Messaging
           if handler.handles?(message: self)
             handler_messages.create!(
               handler: handler,
-              status: Models::HandlerMessage::STATUS[:unhandled],
+              status: delayed_until.nil? ? Models::HandlerMessage::STATUS[:unhandled] : Models::HandlerMessage::STATUS[:delayed],
+              delayed_until: delayed_until,
               priority: priority || 0,
               attempts_count: 0,
               attempts_max: attempts_max || 1)
