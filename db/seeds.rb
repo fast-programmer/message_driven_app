@@ -46,7 +46,7 @@ handlers = [
     enabled: true)
 ]
 
-1.times do |i|
+10.times do |i|
   user, event = IAM::User.create(email: "user#{i+1}@fastprogrammer.co")
 
   user, command = IAM::User.sync_async(

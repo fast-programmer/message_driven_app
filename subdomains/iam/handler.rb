@@ -5,7 +5,7 @@ module IAM
   module Handler
     extend self
 
-    def routes
+    def handlers
       {
         'IAM::Messages::User::Sync' => Handlers::User::Sync,
         'IAM::Messages::User::Synced' => Handlers::User::Synced
@@ -13,17 +13,17 @@ module IAM
     end
 
     def handles?(message:)
-      routes.has_key?(message.body_class_name)
+      handlers.has_key?(message.body_class_name)
     end
 
     def handle(message:, logger: Logger.new(STDOUT))
-      logger.info("IAM::Handler> message #{message.id} handling #{message.body.class.name}")
+      logger.info("[##{message.id}] IAM::Handler> handling #{message.body.class.name}")
 
-      routes[message.body_class_name].handle(message: message, logger: logger)
+      result = handlers[message.body_class_name].handle(message: message, logger: logger)
 
-      logger.info("IAM::Handler> message #{message.id} handled #{message.body.class.name}")
+      logger.info("[##{message.id}] IAM::Handler> handled #{message.body.class.name}")
 
-      { name: 'IAM::Handler' }
+      result
     end
   end
 end
