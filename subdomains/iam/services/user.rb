@@ -22,8 +22,7 @@ module IAM
         event = user.events.create!(
           account_id: account.id,
           user_id: user.id,
-          body: Messages::User::Created.new(
-            email: user.email))
+          body: Messages::User::Created.new(email: user.email))
       end
 
       [user.tap(&:readonly!), event.tap(&:readonly!)]

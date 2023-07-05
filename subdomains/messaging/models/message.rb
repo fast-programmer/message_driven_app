@@ -43,6 +43,7 @@ module Messaging
         Models::Handler.where(enabled: true).find_each do |handler|
           if handler.handles?(message: self)
             handler_messages.create!(
+              queue_id: queue_id,
               handler: handler,
               status: delayed_until.nil? ? Models::HandlerMessage::STATUS[:unhandled] : Models::HandlerMessage::STATUS[:delayed],
               delayed_until: delayed_until,

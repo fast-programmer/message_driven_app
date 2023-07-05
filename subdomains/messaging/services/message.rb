@@ -180,8 +180,7 @@ module Messaging
     def self.calculate_delayed_until(attempt_count)
       backoff_time = sidekiq_backoff(attempt_count)
 
-      Time.current + backoff_time
-    end
+      Time.current + backoff_time end
 
     def self.sidekiq_backoff(attempt_count)
       (attempt_count ** 4) + 15 + (rand(30) * (attempt_count))
@@ -191,6 +190,7 @@ module Messaging
       ActiveRecord::Base.connection_pool.with_connection do
         ActiveRecord::Base.transaction do
           handler_message = Models::HandlerMessage
+                              .where(queue_id: queue_id)
                               .where(
                                 "(status = :unhandled) OR (status = :delayed AND delayed_until < :current_time)",
                                 unhandled: Models::HandlerMessage::STATUS[:unhandled],

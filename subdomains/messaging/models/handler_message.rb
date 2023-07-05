@@ -17,12 +17,6 @@ module Messaging
       attribute :attempts_count, :integer, default: 0
       attribute :attempts_max, :integer, default: 1
 
-      # def delayed_until=(value)
-      #   self.status = Models::Message::STATUS[:delayed] if value.present?
-
-      #   super(value)
-      # end
-
       class Attempt < ApplicationRecord
         self.table_name = 'messaging_handler_message_attempts'
 
@@ -38,6 +32,7 @@ module Messaging
       belongs_to :handler, foreign_key: 'handler_id', class_name: '::Messaging::Models::Handler'
       has_many :attempts, class_name: '::Messaging::Models::HandlerMessage::Attempt', dependent: :destroy
 
+      validates :queue_id, presence: true
       validates :message_id, presence: true
       validates :handler_id, presence: true
 

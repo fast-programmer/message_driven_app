@@ -1,6 +1,7 @@
 class CreateMessagingHandlerMessages < ActiveRecord::Migration[6.0]
   def change
     create_table :messaging_handler_messages do |t|
+      t.bigint :queue_id, null: false
       t.bigint :message_id, null: false
       t.bigint :handler_id, null: false
 
@@ -15,6 +16,7 @@ class CreateMessagingHandlerMessages < ActiveRecord::Migration[6.0]
       t.column :updated_at, 'timestamptz', null: false
     end
 
+    add_foreign_key :messaging_handler_messages, :messaging_queues, column: :queue_id
     add_foreign_key :messaging_handler_messages, :messaging_messages, column: :message_id
     add_foreign_key :messaging_handler_messages, :messaging_handlers, column: :handler_id
 

@@ -52,6 +52,7 @@ ActiveRecord::Schema.define(version: 2023_07_03_092160) do
   end
 
   create_table "messaging_handler_messages", force: :cascade do |t|
+    t.bigint "queue_id", null: false
     t.bigint "message_id", null: false
     t.bigint "handler_id", null: false
     t.text "status", null: false
@@ -105,6 +106,7 @@ ActiveRecord::Schema.define(version: 2023_07_03_092160) do
   add_foreign_key "messaging_handler_message_attempts", "messaging_handler_messages", column: "handler_message_id"
   add_foreign_key "messaging_handler_messages", "messaging_handlers", column: "handler_id"
   add_foreign_key "messaging_handler_messages", "messaging_messages", column: "message_id"
+  add_foreign_key "messaging_handler_messages", "messaging_queues", column: "queue_id"
   add_foreign_key "messaging_handlers", "messaging_queues", column: "queue_id"
   add_foreign_key "messaging_messages", "iam_accounts", column: "account_id"
   add_foreign_key "messaging_messages", "iam_users", column: "user_id"
