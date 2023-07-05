@@ -28,21 +28,18 @@ handlers = [
     slug: 'iam',
     name: 'IAM',
     class_name: 'IAM::Handler',
-    method_name: 'handle',
     enabled: true),
   Messaging::Models::Handler.create!(
     queue_id: default_queue.id,
     slug: 'active-campaign-integration',
     name: 'Active Campaign Integration',
     class_name: 'ActiveCampaignIntegration::Handler',
-    method_name: 'handle',
     enabled: true),
   Messaging::Models::Handler.create!(
     queue_id: default_queue.id,
     slug: 'mailchimp-integration',
     name: 'Mailchimp Integration',
     class_name: 'MailchimpIntegration::Handler',
-    method_name: 'handle',
     enabled: true)
 ]
 

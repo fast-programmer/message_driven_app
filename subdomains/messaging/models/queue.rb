@@ -4,13 +4,14 @@ module Messaging
       self.table_name = 'messaging_queues'
 
       DEFAULT_NAME = 'default'
+      DEFAULT_SLUG = DEFAULT_NAME
 
       def self.default_id
         default.id
       end
 
       def self.default
-        find_or_create_by(name: DEFAULT_NAME)
+        find_or_create_by!(name: DEFAULT_NAME, slug: DEFAULT_SLUG)
       end
 
       validates :lock_version, presence: true, numericality: { only_integer: true }

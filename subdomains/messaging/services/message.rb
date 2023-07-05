@@ -115,14 +115,12 @@ module Messaging
     def self.handle_with_optional_connection(handler_message:, logger:, use_connection:)
       if use_connection
         ActiveRecord::Base.connection_pool.with_connection do
-          handler_message.handler.class_name.constantize.send(
-            handler_message.handler.method_name,
+          handler_message.handler.class_name.constantize.send('handle',
             message: handler_message.message,
             logger: logger)
         end
       else
-        handler_message.handler.class_name.constantize.send(
-          handler_message.handler.method_name,
+        handler_message.handler.class_name.constantize.send('handle',
           message: handler_message.message,
           logger: logger)
       end

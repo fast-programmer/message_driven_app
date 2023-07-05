@@ -9,7 +9,6 @@ module Messaging
       validates :slug, presence: true, uniqueness: { scope: :queue_id }
 
       validates :class_name, presence: true
-      validates :method_name, presence: true
 
       validates :enabled, inclusion: { in: [true, false] }
 

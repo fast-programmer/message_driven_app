@@ -3,7 +3,11 @@ Rails.application.routes.draw do
     resources :users, only: [:create]
   end
 
-  namespace :messaging do
-    resources :messages, only: [:index]
+  scope :admin do
+    namespace :messaging do
+      resources :queues, param: :slug do
+        resources :messages, only: [:show], controller: 'queues/messages'
+      end
+    end
   end
 end

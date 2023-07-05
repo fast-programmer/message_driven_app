@@ -6,7 +6,6 @@ class CreateMessagingHandlers < ActiveRecord::Migration[6.0]
       t.text :name, null: false
 
       t.text :class_name, null: false
-      t.text :method_name, null: false
 
       t.boolean :enabled, null: false
 

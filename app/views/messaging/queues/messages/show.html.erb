@@ -1,0 +1,27 @@
+<h1>Message ID: <%= message.id %></h1>
+
+<p>Type: <%= message.type %></p>
+<p>Body: <%= message.body %></p>
+<p>Created at: <%= message.created_at %></p>
+<p>Updated at: <%= message.updated_at %></p>
+
+<h2>Handler Messages</h2>
+<% message.handler_messages.each do |handler_message| %>
+  <h3>Handler Message ID: <%= handler_message.id %></h3>
+  <p>Status: <%= handler_message.status %></p>
+  <p>Priority: <%= handler_message.priority %></p>
+  <p>Attempts count: <%= handler_message.attempts_count %></p>
+  <p>Attempts max: <%= handler_message.attempts_max %></p>
+
+  <h4>Attempts</h4>
+  <% handler_message.attempts.each do |attempt| %>
+    <h5>Attempt ID: <%= attempt.id %></h5>
+    <p>Started at: <%= attempt.started_at %></p>
+    <p>Ended at: <%= attempt.ended_at %></p>
+    <p>Successful: <%= attempt.successful %></p>
+    <p>Return value: <%= attempt.return_value %></p>
+    <p>Error class name: <%= attempt.error_class_name %></p>
+    <p>Error message: <%= attempt.error_message %></p>
+    <p>Error backtrace: <%= attempt.error_backtrace&.join("\n") %></p>
+  <% end %>
+<% end %>

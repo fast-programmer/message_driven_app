@@ -71,7 +71,6 @@ ActiveRecord::Schema.define(version: 2023_07_03_092160) do
     t.text "slug", null: false
     t.text "name", null: false
     t.text "class_name", null: false
-    t.text "method_name", null: false
     t.boolean "enabled", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -97,7 +96,8 @@ ActiveRecord::Schema.define(version: 2023_07_03_092160) do
   create_table "messaging_queues", force: :cascade do |t|
     t.integer "lock_version", default: 0, null: false
     t.text "name", null: false
-    t.index ["name"], name: "index_messaging_queues_on_name", unique: true
+    t.text "slug", null: false
+    t.index ["slug"], name: "index_messaging_queues_on_slug", unique: true
   end
 
   add_foreign_key "iam_accounts", "iam_users", column: "owner_id"
