@@ -41,7 +41,7 @@ module Messaging
     def self.loop_dequeue_handler_message(queue, logger, queue_id, concurrency, poll)
       while @is_handling
         unless queue.length < concurrency
-          logger.info('queue.length >= concurrency')
+          logger.debug('queue.length >= concurrency')
 
           sleep poll
 
@@ -51,7 +51,7 @@ module Messaging
         handler_message = dequeue(queue_id: queue_id, current_time: Time.current)
 
         unless handler_message
-          logger.info('no messages to handle')
+          logger.debug('no messages to handle')
 
           sleep poll
 

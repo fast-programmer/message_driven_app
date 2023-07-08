@@ -92,3 +92,8 @@ end
 #               <p>Error backtrace: <%= attempt.error_backtrace&.join("\n") %></p>
 #   </div>
 #           <% end %>
+
+
+
+# how to get RSS
+# ps -o rss= -p <pid>

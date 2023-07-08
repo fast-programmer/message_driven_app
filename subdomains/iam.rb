@@ -9,4 +9,7 @@ require_relative 'iam/services/user'
 
 require_relative 'iam/handler'
 
+require_relative 'iam/workers/user/sync'
+require_relative 'iam/workers/user/synced'
+
 

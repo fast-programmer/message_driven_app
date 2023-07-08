@@ -11,13 +11,14 @@ module Messaging
         'ERROR' => :red,
         'FATAL' => :red
       }
-      thread_ids = Hash.new { |h, k| h[k] = h.size }
 
       logger = ::Logger.new(output)
       logger.formatter = proc do |severity, datetime, progname, msg|
-        thread_id = thread_ids[Thread.current.object_id]
+        thread_id = "tid=#{Thread.current.object_id.to_s(16)}"
+        pid = "pid=#{Process.pid}"
         color = color_scheme[severity] || :white
-        "#{datetime.utc.iso8601(3)} TID-#{thread_id.to_s.rjust(3, '0')} #{progname}: [#{severity.downcase}]: #{msg}\n".colorize(color)
+
+        "#{datetime.utc.iso8601(3)}Z #{pid} #{thread_id} #{severity}: #{msg}\n".colorize(color)
       end
       logger
     end
