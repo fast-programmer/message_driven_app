@@ -78,3 +78,17 @@ end
 # messaging/handler-messages/1
 #   handler =>
 #   message =>
+
+
+# <% handler_message.attempts.each do |attempt| %>
+#             <div>
+#   <p>Attempt ID: <%= attempt.id %></p>
+#               <p>Started at: <%= attempt.started_at %></p>
+#   <p>Ended at: <%= attempt.ended_at %></p>
+#               <p>Successful: <%= attempt.successful %></p>
+#   <p>Return value: <%= attempt.return_value %></p>
+#               <p>Error class name: <%= attempt.error_class_name %></p>
+#   <p>Error message: <%= attempt.error_message %></p>
+#               <p>Error backtrace: <%= attempt.error_backtrace&.join("\n") %></p>
+#   </div>
+#           <% end %>

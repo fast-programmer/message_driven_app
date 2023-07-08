@@ -17,6 +17,8 @@ module IAM
     end
 
     def handle(message:, logger: Logger.new(STDOUT))
+      raise StandardError.new('some error')
+
       logger.info("[##{message.id}] IAM::Handler> handling #{message.body.class.name}")
 
       result = handlers[message.body_class_name].handle(message: message, logger: logger)

@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>MessageDrivenApp</title>
+    <title>Message Driven App</title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= stylesheet_link_tag    'application', media: 'all' %>
+    <%= stylesheet_link_tag 'application', media: 'all' %>
   </head>
 
   <body>
-    <%= yield %>
+    <%= render 'layouts/header' %>
+    <main>
+      <div class="main-content">
+        <%= render 'layouts/navbar' %>
+        <%= render 'layouts/content' %>
+      </div>
+      <%= render 'layouts/footer' %>
+    </main>
   </body>
 </html>

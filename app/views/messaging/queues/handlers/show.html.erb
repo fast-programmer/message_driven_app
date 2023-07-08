@@ -1,0 +1,43 @@
+<% content_for :breadcrumb do %>
+    queue > <%= queue.name %> > handler > <%= handler.name %>
+<% end %>
+
+<h1><%= handler.name %> Handler</h1>
+
+<h2>Statuses</h2>
+
+<% statuses.each do |key, value| %>
+    <div class="status">
+        <%= link_to "#{value} (#{status_counts[key] || 0})", messaging_queue_handler_path(status: key) %>
+    </div>
+<% end %>
+
+<h2>Messages</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Status</th>
+      <th>Priority</th>
+      <th>Delayed until</th>
+      <th>Attempts count</th>
+      <th>Attempts max</th>
+      <th>Attempts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% handler_messages.each do |handler_message| %>
+      <tr>
+        <td><%= handler_message.id %></td>
+        <td><%= handler_message.status %></td>
+        <td><%= handler_message.priority %></td>
+        <td><%= handler_message.delayed_until %></td>
+        <td><%= handler_message.attempts_count %></td>
+        <td><%= handler_message.attempts_max %></td>
+        <td><%= 'Attempts' %></td>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -6,22 +6,56 @@
 <p>Updated at: <%= message.updated_at %></p>
 
 <h2>Handler Messages</h2>
-<% message.handler_messages.each do |handler_message| %>
-  <h3>Handler Message ID: <%= handler_message.id %></h3>
-  <p>Status: <%= handler_message.status %></p>
-  <p>Priority: <%= handler_message.priority %></p>
-  <p>Attempts count: <%= handler_message.attempts_count %></p>
-  <p>Attempts max: <%= handler_message.attempts_max %></p>
-
-  <h4>Attempts</h4>
-  <% handler_message.attempts.each do |attempt| %>
-    <h5>Attempt ID: <%= attempt.id %></h5>
-    <p>Started at: <%= attempt.started_at %></p>
-    <p>Ended at: <%= attempt.ended_at %></p>
-    <p>Successful: <%= attempt.successful %></p>
-    <p>Return value: <%= attempt.return_value %></p>
-    <p>Error class name: <%= attempt.error_class_name %></p>
-    <p>Error message: <%= attempt.error_message %></p>
-    <p>Error backtrace: <%= attempt.error_backtrace&.join("\n") %></p>
-  <% end %>
-<% end %>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Status</th>
+      <th>Priority</th>
+      <th>Attempts count</th>
+      <th>Attempts max</th>
+      <th>Attempts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% message.handler_messages.each do |handler_message| %>
+      <tr>
+        <td><%= handler_message.id %></td>
+        <td><%= handler_message.status %></td>
+        <td><%= handler_message.priority %></td>
+        <td><%= handler_message.attempts_count %></td>
+        <td><%= handler_message.attempts_max %></td>
+        <td>
+          <table>
+            <thead>
+              <tr>
+                <th>Attempt ID</th>
+                <th>Started at</th>
+                <th>Ended at</th>
+                <th>Successful</th>
+                <th>Return value</th>
+                <th>Error class name</th>
+                <th>Error message</th>
+                <th>Error backtrace</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% handler_message.attempts.each do |attempt| %>
+                <tr>
+                  <td><%= attempt.id %></td>
+                  <td><%= attempt.started_at %></td>
+                  <td><%= attempt.ended_at %></td>
+                  <td><%= attempt.successful %></td>
+                  <td><%= attempt.return_value %></td>
+                  <td><%= attempt.error_class_name %></td>
+                  <td><%= attempt.error_message %></td>
+                  <!-- <td><%= attempt.error_backtrace&.join("\n") %></td> -->
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

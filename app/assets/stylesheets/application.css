@@ -1,1 +1,42 @@
-*= require messaging/application
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+main {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+header, footer {
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    flex-grow: 1; /* this will ensure that main-content takes up all available space */
+}
+
+nav, .content {
+    height: 100%;
+}
+
+nav {
+    flex: 0 0 10%;
+}
+
+.content {
+    flex: 0 0 90%;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+}

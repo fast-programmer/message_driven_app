@@ -1,0 +1,9 @@
+<nav>
+  <ul>
+    <% @queues.each do |queue| %>
+      <li>
+        <%= link_to queue.name, messaging_queue_path(queue.slug) %>
+      </li>
+    <% end %>
+  </ul>
+</nav>

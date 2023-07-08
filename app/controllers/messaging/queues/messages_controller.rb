@@ -2,12 +2,12 @@ module Messaging
   module Queues
     class MessagesController < ::ApplicationController
       def show
-        queues = Models::Queue.all
-        queue = queues.find { |q| q.slug == params[:queue_slug] }
+        @queues = Models::Queue.all
+        queue = @queues.find { |q| q.slug == params[:queue_slug] }
         message = queue.messages.find_by!(id: params[:id])
 
         render locals: {
-          queues: queues,
+          queues: @queues,
           queue: queue,
           message: message
         }
@@ -33,20 +33,6 @@ module Messaging
       #   }
       # end
 
-      # def find_messages(status: nil, queue_id: nil, order: nil, limit: nil)
-      #   messages = Models::Message.all
-
-      #   messages = messages.where(queue_id: queue_id) if queue_id.present?
-      #   messages = messages.where(status: status) if status.present?
-      #   messages = messages.order(created_at: order.to_sym) if order.present?
-      #   messages = messages.limit(limit.to_i) if limit.present? && limit.to_i.positive?
-
-      #   messages
-      # end
-
-      # def count_messages_by_status(statuses)
-      #   Models::Message.where(status: statuses).group(:status).count.transform_keys(&:to_sym)
-      # end
     end
   end
 end
