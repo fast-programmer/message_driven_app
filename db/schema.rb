@@ -79,7 +79,6 @@ ActiveRecord::Schema.define(version: 2023_07_09_051210) do
   create_table "messaging_messages", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "user_id", null: false
-    t.bigint "queue_id", null: false
     t.text "type", null: false
     t.text "body_class_name", null: false
     t.jsonb "body_json", null: false
@@ -106,5 +105,4 @@ ActiveRecord::Schema.define(version: 2023_07_09_051210) do
   add_foreign_key "messaging_job_attempts", "messaging_jobs", column: "job_id"
   add_foreign_key "messaging_jobs", "messaging_messages", column: "message_id"
   add_foreign_key "messaging_jobs", "messaging_queues", column: "queue_id"
-  add_foreign_key "messaging_messages", "messaging_queues", column: "queue_id"
 end
