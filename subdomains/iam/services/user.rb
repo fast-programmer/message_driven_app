@@ -25,7 +25,8 @@ module IAM
           body: Messages::User::Created.new(email: user.email))
       end
 
-      [user.tap(&:readonly!), event.tap(&:readonly!)]
+      # [user.tap(&:readonly!), event.tap(&:readonly!)]
+      [user, event]
     rescue ActiveRecord::RecordInvalid => e
       raise Error.new(e.record.errors.full_messages.to_sentence)
     rescue ActiveRecord::RecordNotUnique => e
@@ -33,16 +34,13 @@ module IAM
     end
 
     def sync_async(account_id:, user_id:, id:,
-                   delayed_until: nil, priority: 0, attempts_max: 1)
+                   scheduled_for: nil, priority: 0, attempts_max: 1)
       user = Models::Account.find(account_id).users.find(id)
 
       command = user.commands.create!(
         account_id: account_id,
         user_id: user_id,
-        body: Messages::User::Sync.new(user: { id: id }),
-        delayed_until: delayed_until,
-        priority: priority,
-        attempts_max: attempts_max)
+        body: Messages::User::Sync.new(user: { id: id }))
 
       [user.tap(&:readonly!), command.tap(&:readonly!)]
     rescue ActiveRecord::RecordNotFound => e

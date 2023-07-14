@@ -14,6 +14,7 @@ class CreateMessagingHandlers < ActiveRecord::Migration[6.0]
     end
 
     add_index :messaging_handlers, [:queue_id, :slug], unique: true
+
     add_foreign_key :messaging_handlers, :messaging_queues, column: :queue_id
   end
 end

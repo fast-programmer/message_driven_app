@@ -1,9 +1,10 @@
 require_relative 'messaging/models/queue'
 require_relative 'messaging/models/handler'
 require_relative 'messaging/models/message'
-require_relative 'messaging/models/handler_message'
+require_relative 'messaging/models/job'
 require_relative 'messaging/models/event'
 require_relative 'messaging/models/command'
+require_relative 'messaging/models/test'
 
 require_relative 'messaging/services/logger'
-require_relative 'messaging/services/message'
+require_relative 'messaging/services/job'

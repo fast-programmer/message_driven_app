@@ -5,6 +5,22 @@ module IAM
   module Handler
     extend self
 
+    def scheduled_for
+      nil
+    end
+
+    def queue_id
+      nil
+    end
+
+    def priority
+      0
+    end
+
+    def attempts_max
+      1
+    end
+
     def handlers
       {
         'IAM::Messages::User::Sync' => Handlers::User::Sync,
@@ -17,15 +33,15 @@ module IAM
     end
 
     def handle(message:, logger: Logger.new(STDOUT))
-      raise StandardError.new('some error')
+      # raise StandardError.new('some error')
 
       logger.info("[##{message.id}] IAM::Handler> handling #{message.body.class.name}")
 
-      result = handlers[message.body_class_name].handle(message: message, logger: logger)
+      result = handlers[message.body_class_name]&.handle(message: message, logger: logger)
 
       logger.info("[##{message.id}] IAM::Handler> handled #{message.body.class.name}")
 
-      result
+      # result
     end
   end
 end

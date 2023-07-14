@@ -27,7 +27,7 @@ end
 #   => Attempt #3
 
 
-# # /messaging/queues/default/handlers/iam?status=unhandled
+# # /messaging/queues/default/handlers/iam?status=queued
 
 # All (5), Unhandled (5), Handling (5), Handled (2), Delayed (10), Failed (0)
 
@@ -55,7 +55,7 @@ end
 # # Note: as every return value and every error of every attempt is stored by default, this can add up to a lot of data
 # # We recommend periodically deleting via scheduled tasks e.g.
 
-# Messaging::Models::HandlerMessage::Attempt.destroy_all
+# Messaging::Models::Job::Attempt.destroy_all
 
 
 

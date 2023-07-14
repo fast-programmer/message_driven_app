@@ -3,22 +3,21 @@ module Messaging
     class Message < ApplicationRecord
       self.table_name = 'messaging_messages'
 
-      attribute :priority, :integer, default: 0
-      attribute :attempts_max, :integer, default: 1
+      attr_accessor :skip_create_jobs
 
-      belongs_to :queue, foreign_key: 'queue_id', class_name: '::Messaging::Models::Queue'
+      def skip_create_jobs?
+        @skip_create_jobs.nil? ? false : @skip_create_jobs
+      end
+
       belongs_to :account
       belongs_to :user
       belongs_to :messageable, polymorphic: true
 
-      has_many :handler_messages, class_name: '::Messaging::Models::HandlerMessage'
-      has_many :handlers, through: :handler_messages
+      has_many :jobs, class_name: '::Messaging::Models::Job'
 
       validates :account_id, presence: true
       validates :user_id, presence: true
       validates :type, presence: true
-
-      validates :attempts_max, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
 
       validates :body_class_name, presence: true
       validates :body_json, presence: true, unless: -> { body_json == {} }
@@ -26,30 +25,33 @@ module Messaging
       validates :messageable_type, presence: true
       validates :messageable_id, presence: true
 
-      after_initialize :set_default_queue, if: :new_record?
-
-      def set_default_queue
-        self.queue ||= Queue.default
-      end
-
-      before_validation :set_account_id
+      before_validation :set_account_id, if: -> { account_id.nil? }
       def set_account_id
-        self.account_id ||= messageable.account_id if messageable.respond_to?(:account_id)
+        self.account_id = messageable.account_id
       end
 
-      after_create :create_handler_messages
+      before_validation :set_user_id, if: -> { user_id.nil? }
+      def set_user_id
+        self.user_id = messageable.user_id
+      end
 
-      def create_handler_messages
+      after_create :create_jobs, unless: :skip_create_jobs?
+
+      def create_jobs
         Models::Handler.where(enabled: true).find_each do |handler|
-          if handler.handles?(message: self)
-            handler_messages.create!(
-              queue_id: queue_id,
-              handler: handler,
-              status: delayed_until.nil? ? Models::HandlerMessage::STATUS[:unhandled] : Models::HandlerMessage::STATUS[:delayed],
-              delayed_until: delayed_until,
-              priority: priority || 0,
-              attempts_count: 0,
-              attempts_max: attempts_max || 1)
+          klass = handler.class_name.constantize
+
+          if klass.respond_to?(:handles?) && klass.handles?(message: self)
+            scheduled_for = (klass.respond_to?(:scheduled_for) && klass.scheduled_for) || nil
+            priority = (klass.respond_to?(:priority) && klass.priority) || 0
+            attempts_max = (klass.respond_to?(:attempts_max) && klass.attempts_max) || 1
+
+            jobs.create!(
+              queue_id: handler.queue_id,
+              handler: handler.class_name.constantize,
+              status: scheduled_for ? Models::Job::STATUS[:scheduled] : Models::Job::STATUS[:queued],
+              priority: priority,
+              attempts_max: attempts_max)
           end
         end
       end

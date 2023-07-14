@@ -14,8 +14,8 @@ module Messaging
 
       belongs_to :queue, class_name: '::Messaging::Models::Queue', foreign_key: :queue_id
 
-      has_many :handler_messages, class_name: '::Messaging::Models::HandlerMessage'
-      has_many :messages, through: :handler_messages
+      has_many :jobs, class_name: '::Messaging::Models::Job'
+      has_many :messages, through: :jobs
 
       def handles?(message:)
         self.class_name.constantize.handles?(message: message)

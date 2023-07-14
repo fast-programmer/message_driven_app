@@ -20,13 +20,13 @@ module Messaging
           queue: queue,
           handler: handler,
           handler_messages: handler_messages,
-          statuses: Models::HandlerMessage::STATUS,
+          statuses: Models::Job::STATUS,
           status_counts: count_handler_messages_by_status
         }
       end
 
       def find_handler_messages(queue_id:, status: nil, order: nil, limit: nil)
-        messages = Models::HandlerMessage.where(queue_id: queue_id)
+        messages = Models::Job.where(queue_id: queue_id)
         messages = messages.where(status: status) if status.present?
         messages = messages.order(created_at: order.to_sym) if order.present?
         messages = messages.limit(limit.to_i) if limit.present? && limit.to_i.positive?
@@ -35,8 +35,8 @@ module Messaging
       end
 
       def count_handler_messages_by_status
-        Models::HandlerMessage
-          .where(status: Models::HandlerMessage::STATUS.keys)
+        Models::Job
+          .where(status: Models::Job::STATUS.keys)
           .group(:status)
           .count
           .transform_keys(&:to_sym)

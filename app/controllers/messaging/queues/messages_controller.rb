@@ -17,10 +17,10 @@ module Messaging
       #   queues = Models::Queue.all
       #   queue = queues.find_by!(slug: params[:queue_slug])
 
-      #   handler_messages = Models::HandlerMessages.where(queue_id: queue.id)
+      #   jobs = Models::Job.where(queue_id: queue.id)
 
-      #   statuses = Models::HandlerMessage::STATUS
-      #   status_counts = count_handler_messages_by_status(statuses.keys)
+      #   statuses = Models::Job::STATUS
+      #   status_counts = count_jobs_by_status(statuses.keys)
 
       #   messages = find_messages(
       #     queue_id: params[:queue_id],
