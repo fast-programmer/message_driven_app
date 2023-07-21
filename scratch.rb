@@ -97,3 +97,125 @@ end
 
 # how to get RSS
 # ps -o rss= -p <pid>
+
+
+# -> scheduled (handle_at > now, attempts_count = 0)
+# -> queued (handle_at = nil, attempts_count = 0)
+# -> handling (handling_by, updated_at)
+# -> handled (handling_by: nil, updated_at)
+# -> rescheduled (handle_at > now, attempts_count >= 1, attempts_count < attempts_max)
+# -> failed (attempts_count == attempts_max)
+
+# Jobs:
+
+#   queued (5), handling (1), handled (151), failed (100)
+# scheduled (14), rescheduled (50)
+
+# queued (5), processing (1), processed (151), failed (100)
+# scheduled (14), rescheduled (50)
+
+
+scheduled or rescheduled same priority
+
+
+
+# def create_jobs
+#   ::Handler.delay.handle(message: self)
+# end
+
+# def create_jobs
+#   Models::Handler.where(enabled: true).find_each do |handler|
+#     klass = handler.class_name.constantize
+
+#     if klass.respond_to?(:handles?) && klass.handles?(message: self)
+#       scheduled_for = (klass.respond_to?(:scheduled_for) && klass.scheduled_for) || nil
+#       priority = (klass.respond_to?(:priority) && klass.priority) || 0
+#       attempts_max = (klass.respond_to?(:attempts_max) && klass.attempts_max) || 1
+
+#       jobs.create!(
+#         queue_id: handler.queue_id,
+#         handler: handler.class_name.constantize,
+#         status: scheduled_for ? Models::Job::STATUS[:scheduled] : Models::Job::STATUS[:queued],
+#         priority: priority,
+#         attempts_max: attempts_max)
+#     end
+#   end
+# end
+
+
+it "processes enqueued jobs" do
+  job = attempt(max: 5, sleep: 1) do
+    tested_event.reload
+
+    tested_event.jobs&.last
+  end
+
+  expect(job.status.to eq(Models::Job::STATUS[:processed]))
+end
+
+
+# handler
+
+module Handler
+  extend self
+
+  # def handle(message:, logger:)
+  def handle(message:)
+    # logger.info("[##{message.id}] Handler> message #{message.id} handling #{message.body.class.name}")
+
+    debugger
+
+    [
+      IAM::Handler,
+      ActiveCampaignIntegration::Handler,
+      MailchimpIntegration::Handler
+    ].each do |handler|
+      message.jobs.create!(handler: handler)
+    end
+
+
+    # default_queue_id = Messaging::Models::Queue.default_id
+
+    # [
+    #   IAM::Handler,
+    #   ActiveCampaignIntegration::Handler,
+    #   MailchimpIntegration::Handler
+    # ].each do |handler|
+    #   queue_id = (handler.respond_to?(:queue_id) && handler.queue_id) || default_queue_id
+
+    #   ActiveRecord::Base.transaction do
+    #     message.jobs.create!(
+    #       queue_id: queue_id,
+    #       handler: handler,
+    #       attempts_max: 2)
+    #   end
+    # end
+
+    # logger.info("[##{message.id}] Handler> message #{message.id} handled #{message.body.class.name}")
+  end
+
+  def handles?(message:)
+    true
+  end
+end
+
+test_event = test.events.create!(skip_create_jobs: true)
+
+
+# if you want to completely override publisher behaviour
+
+ActiveRecord::Base.transaction do
+  test = Models::Test.create!(account_id: 1, user_id: 2)
+  test_event = test.events.create!(body: Messages::Test::Created.new(id: test.id))
+
+  test_event.jobs.create!(handler: Handler.handle, attempts_max: 1)
+end
+
+# ActiveRecord::Base.transaction do
+#   test = Models::Test.create!(account_id: 1, user_id: 2)
+#   test_event = test.events.create!
+
+#   test_event.jobs.create!(
+#     handler: CustomHandler.handle,
+#     options: { attempts_max: 2 })
+# end

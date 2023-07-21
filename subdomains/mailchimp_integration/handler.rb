@@ -2,23 +2,24 @@ module MailchimpIntegration
   module Handler
     extend self
 
-    def routes
+    def handlers
       {}
     end
 
-    def handles?(message:)
-      routes.has_key?(message.body_class_name)
+    def can_handle?(message:)
+      handlers.has_key?(message.body_class_name)
     end
 
-    def handle(message:, logger: Logger.new(STDOUT))
+    def handle(message:, logger:)
+      # raise StandardError.new('some error')
+
       logger.info("[##{message.id}] MailchimpIntegration::Handler> message #{message.id} handling #{message.body.class.name}")
 
-      # routes[message.body_class_name].constantize.handle(
-      #   message: message, logger: logger)
+      result = handlers[message.body_class_name].constantize.handle(message: message, logger: logger)
 
       logger.info("[##{message.id}] MailchimpIntegration::Handler> message #{message.id} handled #{message.body.class.name}")
 
-      { name: 'MailchimpIntegration::Handler' }
+      result
     end
   end
 end

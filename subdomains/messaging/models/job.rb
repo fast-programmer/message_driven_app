@@ -17,8 +17,26 @@ module Messaging
       attribute :attempts_count, :integer, default: 0
       attribute :attempts_max, :integer, default: 1
 
+      def self.options
+        {
+          attempts_max: 1,
+          priority: 0,
+          backoff: -> (current_time:, attempt_index:) { current_time + attempt_index },
+          run_at: -> (current_time:) { current_time + 1.second }
+        }
+      end
+
+      before :validation
+
       def handler=(handler)
         self.handler_class_name = handler.name
+        self.handler_method_name = handler.method_name
+
+        options = self.options.merge(handler.options)
+
+        # self.priority = options.priority
+        # self.attempts_count = options.attempts
+        # self.run_at = options.run_at
       end
 
       def handler

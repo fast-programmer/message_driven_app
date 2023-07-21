@@ -38,21 +38,16 @@ module Messaging
       after_create :create_jobs, unless: :skip_create_jobs?
 
       def create_jobs
-        Models::Handler.where(enabled: true).find_each do |handler|
-          klass = handler.class_name.constantize
+        Models::Publisher.where(enabled: true).map do |publisher|
+          handler = publisher.handler
+          options = Models::Job.options.merge(handler.options)
 
-          if klass.respond_to?(:handles?) && klass.handles?(message: self)
-            scheduled_for = (klass.respond_to?(:scheduled_for) && klass.scheduled_for) || nil
-            priority = (klass.respond_to?(:priority) && klass.priority) || 0
-            attempts_max = (klass.respond_to?(:attempts_max) && klass.attempts_max) || 1
-
-            jobs.create!(
-              queue_id: handler.queue_id,
-              handler: handler.class_name.constantize,
-              status: scheduled_for ? Models::Job::STATUS[:scheduled] : Models::Job::STATUS[:queued],
-              priority: priority,
-              attempts_max: attempts_max)
-          end
+          jobs.create!(
+            handler: handler,
+            queue_id: options.queue_id,
+            priority: options.priority,
+            attempts_max: attempts_max,
+            handle_at: options.handle_at)
         end
       end
 

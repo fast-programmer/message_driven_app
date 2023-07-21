@@ -10,10 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_07_09_051210) do
+ActiveRecord::Schema.define(version: 2023_07_19_102022) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "delayed_jobs", force: :cascade do |t|
+    t.integer "priority", default: 0, null: false
+    t.integer "attempts", default: 0, null: false
+    t.text "handler", null: false
+    t.text "last_error"
+    t.datetime "run_at"
+    t.datetime "locked_at"
+    t.datetime "failed_at"
+    t.string "locked_by"
+    t.string "queue"
+    t.datetime "created_at", precision: 6
+    t.datetime "updated_at", precision: 6
+    t.index ["priority", "run_at"], name: "delayed_jobs_priority"
+  end
 
   create_table "iam_accounts", force: :cascade do |t|
     t.integer "lock_version", default: 0, null: false
@@ -79,6 +94,7 @@ ActiveRecord::Schema.define(version: 2023_07_09_051210) do
   create_table "messaging_messages", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "user_id", null: false
+    t.bigint "queue_id", null: false
     t.text "type", null: false
     t.text "body_class_name", null: false
     t.jsonb "body_json", null: false
@@ -105,4 +121,5 @@ ActiveRecord::Schema.define(version: 2023_07_09_051210) do
   add_foreign_key "messaging_job_attempts", "messaging_jobs", column: "job_id"
   add_foreign_key "messaging_jobs", "messaging_messages", column: "message_id"
   add_foreign_key "messaging_jobs", "messaging_queues", column: "queue_id"
+  add_foreign_key "messaging_messages", "messaging_queues", column: "queue_id"
 end

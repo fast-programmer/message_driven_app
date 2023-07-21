@@ -31,7 +31,8 @@ module Messaging
     end
 
     def self.shutdown
-      @is_handling = false end
+      @is_handling = false
+    end
 
     def self.create_workers(concurrency, queue, logger)
       concurrency.times.map do
@@ -87,7 +88,7 @@ module Messaging
 
         begin
           job.handler_class_name.constantize.send(
-            'handle',
+            job.handler_method_name,
             message: job.message,
             logger: logger)
         ensure
@@ -173,7 +174,8 @@ module Messaging
     def self.calculate_scheduled_for(attempt_count)
       backoff_time = sidekiq_backoff(attempt_count)
 
-      Time.current + backoff_time end
+      Time.current + backoff_time
+    end
 
     def self.sidekiq_backoff(attempt_count)
       (attempt_count ** 4) + 15 + (rand(30) * (attempt_count))

@@ -11,10 +11,12 @@ gem 'sass-rails', '>= 6'
 gem 'colorize'
 gem 'concurrent-ruby'
 gem 'google-protobuf', '~> 3.23', '>= 3.23.3'
+gem 'daemons'
 
 gem 'bootsnap', '>= 1.4.2', require: false
 
 gem "sidekiq", "~> 6.5"
+gem 'delayed_job_active_record'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

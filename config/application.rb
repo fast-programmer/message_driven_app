@@ -9,6 +9,7 @@ Bundler.require(*Rails.groups)
 
 require_relative '../app/models/application_record'
 
+require_relative '../subdomains/monitoring'
 require_relative '../subdomains/iam'
 require_relative '../subdomains/messaging'
 require_relative '../subdomains/active_campaign_integration'

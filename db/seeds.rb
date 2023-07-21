@@ -239,3 +239,4 @@ end
 #             attempts: [{ successful: true, return_value: nil }],
 #         3. MailCampaignIntegration::Handler - Failed
 #             attempts: [{ successful: false, error... }],
+
