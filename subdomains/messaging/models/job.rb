@@ -4,8 +4,9 @@ module Messaging
       self.table_name = 'messaging_jobs'
 
       STATUS = {
-        queued: 'queued',
         scheduled: 'scheduled',
+        rescheduled: 'rescheduled',
+        queued: 'queued',
         processing: 'processing',
         processed: 'processed',
         failed: 'failed'
@@ -17,30 +18,17 @@ module Messaging
       attribute :attempts_count, :integer, default: 0
       attribute :attempts_max, :integer, default: 1
 
-      def self.options
-        {
-          attempts_max: 1,
-          priority: 0,
-          backoff: -> (current_time:, attempt_index:) { current_time + attempt_index },
-          run_at: -> (current_time:) { current_time + 1.second }
-        }
-      end
-
-      before :validation
-
       def handler=(handler)
-        self.handler_class_name = handler.name
-        self.handler_method_name = handler.method_name
+        handler_class_name, handler_method_name = handler.split('.')
 
-        options = self.options.merge(handler.options)
+        handler_class_name
 
-        # self.priority = options.priority
-        # self.attempts_count = options.attempts
-        # self.run_at = options.run_at
+        self.handler_class_name = handler_class_name
+        self.handler_method_name = handler_method_name
       end
 
       def handler
-        handler_class_name.constantize
+        [handler_class_name, handler_method_name].join('.')
       end
 
       class Attempt < ApplicationRecord
@@ -64,20 +52,20 @@ module Messaging
       validates :status, presence: true,
         inclusion: { in: STATUS.values, message: "%{value} is not a valid status" }
 
-      validate :validate_scheduled_for
-      def validate_scheduled_for
-        if status == STATUS[:scheduled] && scheduled_for.nil?
-          errors.add(:scheduled_for, 'must be present when status is scheduled')
-        elsif status != STATUS[:scheduled] && scheduled_for.present?
-          errors.add(:scheduled_for, 'must be nil when status is not scheduled')
+      validate :validate_process_at
+      def validate_process_at
+        if [STATUS[:scheduled], STATUS[:rescheduled]].include?(status) && process_at.nil?
+          errors.add(:process_at, "must be present when status is #{status}")
+        elsif ![STATUS[:scheduled], STATUS[:rescheduled]].include?(status) && process_at.present?
+          errors.add(:process_at, "must be nil when status is not #{status}")
         end
       end
 
       validates :priority, numericality: { greater_than_or_equal_to: 0 }
       validates :attempts_count, presence: true, numericality: {
-                  only_integer: true, greater_than_or_equal_to: 0 }
+        only_integer: true, greater_than_or_equal_to: 0 }
       validates :attempts_max, presence: true, numericality: {
-                  only_integer: true, greater_than_or_equal_to: 1 }
+        only_integer: true, greater_than_or_equal_to: 1 }
 
       validate :validate_attempts_count_not_greater_than_attempts_max
       def validate_attempts_count_not_greater_than_attempts_max
@@ -91,7 +79,6 @@ module Messaging
       def set_default_queue
         self.queue ||= Queue.default
       end
-
     end
   end
 end

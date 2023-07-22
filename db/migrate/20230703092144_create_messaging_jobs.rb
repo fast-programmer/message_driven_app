@@ -5,11 +5,12 @@ class CreateMessagingJobs < ActiveRecord::Migration[6.0]
       t.bigint :message_id, null: false
 
       t.text :handler_class_name, null: false
+      t.text :handler_method_name, null: false
 
       t.text :status, null: false
 
       t.bigint :priority, null: false
-      t.column :scheduled_for, 'timestamptz'
+      t.column :process_at, 'timestamptz'
       t.integer :attempts_count, null: false
       t.integer :attempts_max, null: false
 

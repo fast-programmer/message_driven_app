@@ -3,10 +3,10 @@ module Messaging
     class Message < ApplicationRecord
       self.table_name = 'messaging_messages'
 
-      attr_accessor :skip_create_jobs
+      attr_accessor :skip_publishing
 
-      def skip_create_jobs?
-        @skip_create_jobs.nil? ? false : @skip_create_jobs
+      def skip_publishing?
+        @skip_publishing.nil? ? false : @skip_publishing
       end
 
       belongs_to :account
@@ -35,19 +35,11 @@ module Messaging
         self.user_id = messageable.user_id
       end
 
-      after_create :create_jobs, unless: :skip_create_jobs?
+      after_create :publish, unless: :skip_publishing?
 
-      def create_jobs
+      def publish
         Models::Publisher.where(enabled: true).map do |publisher|
-          handler = publisher.handler
-          options = Models::Job.options.merge(handler.options)
-
-          jobs.create!(
-            handler: handler,
-            queue_id: options.queue_id,
-            priority: options.priority,
-            attempts_max: attempts_max,
-            handle_at: options.handle_at)
+          jobs.create!(handler: publisher.handler)
         end
       end
 

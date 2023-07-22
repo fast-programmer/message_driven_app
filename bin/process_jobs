@@ -3,4 +3,44 @@
 ENV['RAILS_ENV'] ||= 'development'
 require_relative '../config/environment'
 
-Messaging::Job.process(concurrency: 5, poll: 1)
+Outboxer::Jobs.new(concurrency: 5).process
+
+config/initializers/outboxer.rb
+
+Outboxer::Jobs.new(
+  poll: 1,
+  concurrency: 5,
+  attempts: {
+    result: { enabled: true }
+  }
+).process
+
+def self.options(current_time: Time.current)
+  {
+    job: {
+      queue_id: 1,
+      priority: 0,
+      process_at: { calculate: current_time + 5.seconds },
+      attempts: {
+        max: 1,
+        error: {
+          persist: true,
+          backtrace: {
+            persist: true,
+            lines: {
+              max: 100,
+              order: :asc
+            }
+          },
+          backoff: {
+            calculate: -> (attempts_count: 1) do
+              current_time + (attempt_count ** 4) + 15 + (rand(30) * (attempt_count))
+            end
+          }
+        },
+        result: { persist: true },
+        processed: { remove: true }
+      }
+    }
+  }
+end

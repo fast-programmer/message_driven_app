@@ -1,7 +1,7 @@
 module Handler
   extend self
 
-  def options
+  def defaults
     {
       attempts_max: 1,
       priority: 0

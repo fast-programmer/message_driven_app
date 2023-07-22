@@ -4,12 +4,21 @@ module Messaging
   module Handler
     extend self
 
-    def options
+    def options(current_time: Time.current)
       {
-        attempts_max: 5,
         priority: 1,
-        backoff: -> (current_time:, attempt_index:) { current_time + attempt_index },
-        run_at: -> (current_time:) { current_time + 1.second }
+        processed: { destroy: true },
+        attempts: {
+          max: 3,
+          error: {
+            backtrace: {
+              lines: {
+                max: 100
+              }
+            }
+          },
+          result: { enabled: true }
+        }
       }
     end
 
@@ -27,12 +36,6 @@ module Messaging
       class Tested
         attr_accessor :id
 
-        def self.decode_json(json)
-          data = JSON.parse(json)
-          obj = self.new(id: data["id"])
-          obj
-        end
-
         def initialize(id:)
           @id = id
         end
@@ -42,21 +45,29 @@ module Messaging
             "id" => @id
           }.to_json
         end
+
+        def self.decode_json(json)
+          data = JSON.parse(json)
+
+          self.new(id: data["id"])
+        end
       end
     end
   end
 
-  RSpec.describe Job do
-    let!(:processor_thread) do
+  RSpec.describe Jobs do
+    let!(:process_jobs_thread) do
       Thread.new do
-        Job.process(poll: 1, concurrency: 5)
+        Jobs.process(poll: 1, concurrency: 5)
       end
     end
 
-    after(:each) do
-      Job.shutdown
+    let!(:publisher) { Models::Publisher.create!(handler: Handler.handle) }
 
-      processor_thread.join
+    after(:each) do
+      Jobs.shutdown
+
+      process_jobs_thread.join
     end
 
     let(:test) { Models::Test.create!(account_id: 1, user_id: 2) }
@@ -75,7 +86,7 @@ module Messaging
       sleep 2
 
       attempt = event.jobs.last.attempts.last
-      expect(attempt.return_value).to eq(true)
+      expect(attempt.result).to eq(true)
     end
   end
 end

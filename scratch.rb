@@ -100,10 +100,10 @@ end
 
 
 # -> scheduled (handle_at > now, attempts_count = 0)
+# -> rescheduled (handle_at > now, attempts_count >= 1, attempts_count < attempts_max)
 # -> queued (handle_at = nil, attempts_count = 0)
 # -> handling (handling_by, updated_at)
 # -> handled (handling_by: nil, updated_at)
-# -> rescheduled (handle_at > now, attempts_count >= 1, attempts_count < attempts_max)
 # -> failed (attempts_count == attempts_max)
 
 # Jobs:
@@ -113,6 +113,19 @@ end
 
 # queued (5), processing (1), processed (151), failed (100)
 # scheduled (14), rescheduled (50)
+
+Models::Job
+  .where(queue_id: queue_id)
+  .where(
+    "(status = queued) || (status IN [:scheduled:, :rescheduled]) AND (handle_at <= :current_time)",
+    queued: Models::Job::STATUS[:queued],
+    scheduled: Models::Job::STATUS[:scheduled],
+    rescheduled: Models::Job::STATUS[:scheduled],
+    current_time: current_time)
+  .order(priority: :desc, created_at: :asc)
+  .limit(1)
+  .lock('FOR UPDATE SKIP LOCKED')
+  .first
 
 
 scheduled or rescheduled same priority
@@ -162,6 +175,14 @@ module Handler
   # def handle(message:, logger:)
   def handle(message:)
     # logger.info("[##{message.id}] Handler> message #{message.id} handling #{message.body.class.name}")
+
+
+
+    # Messaging.config.defaults[:job][:queue_id]
+    # Messaging.config.defaults[:job][:process_at].call(current_time: Time.current)
+    # Messaging.config.defaults[:job][:attempts][:max]
+    # Messaging.config.defaults[:job][:attempts][:backoff].call(
+    #   current_time: Time.current, attempts_count: 1)
 
     debugger
 
@@ -219,3 +240,221 @@ end
 #     handler: CustomHandler.handle,
 #     options: { attempts_max: 2 })
 # end
+
+
+def destroy_recent
+  Models::Job.where()
+  job.destroy!
+  => attempts
+end
+
+def destroy_recent_attempts
+end
+
+
+def handler=(handler)
+  defaults = Models::Config.defaults.deep_merge(handler.defaults)
+
+  self.queue_id = defaults[:job][:queue_id] if queue_id.nil?
+  self.priority = options.priority if priority.nil?
+  self.process_at = options.calculate_process_at if process_at.nil?
+
+  self.handler_class_name = handler.name
+  self.handler_method_name = handler.method_name
+end
+
+def handler
+  handler_class_name.constantize.method(:handler_method_name)
+end
+
+def handler=(handler)
+  self.handler_class_name = handler.name
+  self.handler_method_name = handler.method_name
+
+  options = self.options.merge(handler.options)
+
+  # self.priority = options.priority
+  # self.attempts_count = options.attempts
+  # self.run_at = options.run_at
+end
+
+def handler
+  handler_class_name.constantize
+end
+
+
+
+def process(poll: Config.defaults[:jobs][:poll],
+            concurrency: Config.default[:jobs][:concurrency],
+            queue_id: Config.defaults[:jobs][:queue_id],
+            logger: Logger.create)
+
+
+module Messaging
+  module Jobs
+    extend self
+
+    @@is_processing = false
+
+    def shutdown
+      @@is_processing = false
+    end
+
+    Signal.trap('INT') do
+      Message.shutdown
+
+      exit
+    end
+
+    def process(poll: Config.jobs.poll,
+                concurrency: Config.jobs.concurrency,
+                queue_id: Config.jobs.queue_id,
+                logger: Config.jobs.logger)
+      queue = Queue.new
+
+      @@is_processing = true
+
+      processor_threads = concurrency.times.map do
+        Thread.new do
+          Thread.current.abort_on_exception = true
+
+          ActiveRecord::Base.connection_pool.with_connection do
+            while @@is_processing
+              job = queue.pop
+
+              Job.process(job: job, logger: logger)
+            end
+          end
+        rescue StandardError => error
+          logger.error("An error occurred: #{error.message}. Backtrace: #{error.backtrace.join("\n")}")
+
+          sleep poll
+
+          retry
+        end
+      end
+
+      begin
+        ActiveRecord::Base.connection_pool.with_connection do
+          while @@is_processing
+            unless queue.length < concurrency
+              logger.debug('queue.length >= concurrency')
+
+              sleep poll
+
+              next
+            end
+
+            job = Job.dequeue(queue_id: queue_id, logger: logger)
+
+            unless job
+              logger.debug('no messages to handle')
+
+              sleep poll
+
+              next
+            end
+
+            queue.push(job)
+          end
+        end
+      rescue StandardError => error
+        logger.error("An error occurred: #{error.message}. Backtrace: #{error.backtrace.join("\n")}")
+
+        sleep poll
+
+        retry
+      end
+
+      processor_threads.each(&:join)
+    end
+  end
+end
+
+
+Thread.current.abort_on_exception = true
+
+
+
+
+o
+module Messaging
+  class Jobs
+    def initialize(poll: Config.jobs.poll,
+                   concurrency: Config.jobs.concurrency,
+                   queue_id: Config.jobs.queue_id,
+                   logger: Config.jobs.logger)
+      @poll = poll
+      @concurrency = concurrency
+      @queue_id = queue_id
+      @logger = logger
+
+      @processing = false
+      @queue = Queue.new
+    end
+
+    def shutdown
+      @processing = false
+    end
+
+    def process
+      @processing = true
+
+      Signal.trap('INT', method(:shutdown))
+
+      processor_threads = concurrency.times.map do
+        Thread.new do
+          begin
+            ActiveRecord::Base.connection_pool.with_connection do
+              while @processing
+                job = @queue.pop
+
+                Job.process(job: job, logger: logger)
+              end
+            end
+          rescue StandardError => error
+            @logger.error("An error occurred: #{error.message}. Backtrace: #{error.backtrace.join("\n")}")
+
+            sleep poll
+
+            retry
+          end
+        end
+      end
+
+      begin
+        ActiveRecord::Base.connection_pool.with_connection do
+          while @processing
+            unless @queue.length < concurrency
+              @logger.debug('@queue.length >= concurrency')
+
+              sleep poll
+
+              next
+            end
+
+            job = Job.dequeue(queue_id: queue_id, logger: logger)
+
+            unless job
+              @logger.debug('no messages to handle')
+
+              sleep poll
+
+              next
+            end
+
+            @queue.push(job)
+          end
+        end
+      rescue StandardError => error
+        @logger.error("An error occurred: #{error.message}. Backtrace: #{error.backtrace.join("\n")}")
+
+        sleep poll
+
+        retry
+      end
+
+      processor_threads.each(&:join)
+    end
+  end
+end
