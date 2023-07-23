@@ -458,3 +458,28 @@ module Messaging
     end
   end
 end
+
+
+
+def initialize(poll: Config.jobs.poll,
+               concurrency: Config.jobs.concurrency,
+               queue_id: Config.jobs.queue_id,
+               logger: Config.jobs.logger)
+
+  processor_threads = concurrency.times.map do
+    Thread.new do
+      ActiveRecord::Base.connection_pool.with_connection do
+        begin
+          while @processing && !@error
+            job = @queue.pop
+
+            Job.process(job: job, logger: logger)
+          end
+        rescue => error
+          @error = error
+
+          logger.error("Exception occurred: #{error.class}: #{error.message}")
+        end
+      end
+    end
+  end
