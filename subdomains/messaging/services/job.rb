@@ -2,7 +2,8 @@ module Messaging
   module Job
     extend self
 
-    def dequeue(queue_id:, logger:, current_time: Time.current)
+    def dequeue(queue_id:, logger:,
+                current_time: Time.current)
       ActiveRecord::Base.transaction do
         Models::Job
           .where(queue_id: queue_id)
@@ -25,7 +26,7 @@ module Messaging
       end
     end
 
-    def process(job:, logger:)
+    def process(job:, logger:, running:, poll:)
       successful = nil
       started_at = nil
       ended_at = nil

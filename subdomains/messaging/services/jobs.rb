@@ -9,9 +9,11 @@ module Messaging
       @queue_id = queue_id
       @logger = logger
 
+      @processing = false
       @errors = []
       @queue = Queue.new
-      @processing = false
+      @threads = [Thread.current]
+      @thread_errors = []
       @thread_errors_mutex = Mutex.new
 
       Signal.trap('INT', method(:shutdown))
@@ -20,7 +22,7 @@ module Messaging
     def process
       @processing = true
 
-      processor_threads = @concurrency.times.map do |i|
+      @threads += @concurrency.times.map do |i|
         Thread.new do
           begin
             thread_index = i + 1
@@ -29,23 +31,37 @@ module Messaging
               while @processing
                 job = @queue.pop
 
+                attempt = Job.process(job: job, logger: logger)
+
                 begin
-                  Job.process(job: job, logger: logger)
+                  ActiveRecord::Base.transaction do
+                    job.save!
+
+                    attempt.save!
+                  end
                 rescue StandardError => error
-                  @logger.error("An error occurred: #{error.message}. Backtrace: #{error.backtrace.join("\n")}")
+                  @logger.error("[Thread #{thread_index}] raised error ${error.message}")
+
+                  if @processing
+                    sleep poll
+
+                    retry
+                  else
+                    raise error
+                  end
                 end
               end
             end
 
-            @logger.info("Thread #{thread_index} has been terminated gracefully")
+            $logger.info("[Thread #{thread_index}] terminating gracefully")
           rescue Exception => error
             @processing = false
 
             @errors_mutex.synchronize do
-              @errors << [Thread.current, error]
+              @errors << [thread_index, error]
             end
 
-            @logger.error("Thread #{thread_index} has been terminated due to an unhandled error")
+            @logger.error("[Thread #{thread_index}] terminating due to unhandled error"
           end
         end
       end
@@ -53,8 +69,6 @@ module Messaging
       begin
         ActiveRecord::Base.connection_pool.with_connection do
           while @processing
-            job = nil
-
             unless @queue.length < concurrency
               @logger.debug('@queue.length >= concurrency')
 
@@ -66,11 +80,15 @@ module Messaging
             begin
               job = Job.dequeue(queue_id: @queue_id, logger: @logger)
             rescue StandardError => error
-              @logger.error("An error occurred: #{error.message}. Backtrace: #{error.backtrace.join("\n")}")
+              @logger.error("[Thread 0] terminating due to unhandled error"
 
-              sleep poll
+              if @processing
+                sleep poll
 
-              retry
+                retry
+              else
+                raise error
+              end
             end
 
             unless job
@@ -88,17 +106,17 @@ module Messaging
         @processing = false
 
         @errors_mutex.synchronize do
-          @errors << [Thread.current, error]
+          @errors << [0, error]
         end
 
-        @logger.error("Main thread #{Thread.current.object_id} has been terminated due to an unhandled error")
+        $logger.error("[Thread 0] terminating due to unhandled error")
       end
 
       processor_threads.each(&:join)
 
       unless @errors.empty?
         @errors.each do |thread, error|
-          @logger.error("Thread was terminated due to an unhandled error: #{error.message}")
+          @logger.error("[Thread #{thread_index}] terminated due to unhandled error: #{error.message}")
         end
 
         exit(1)
